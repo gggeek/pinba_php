@@ -4,8 +4,7 @@
  *
  * @see http://pinba.org/wiki/Manual:PHP_extension
  * @author G. Giunta
- * @version $Id$
- * @copyright (C) G. Giunta 2011
+ * @copyright (C) G. Giunta 2011 - 2012
  */
 
 /**
