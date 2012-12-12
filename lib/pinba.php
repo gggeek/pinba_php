@@ -188,7 +188,7 @@ class pinba
     static function timer_get_info($timer)
     {
         $time = microtime(true);
-        return self::_timer_get_info($timer, $time);
+        return static::_timer_get_info($timer, $time);
     }
 
     protected static function _timer_get_info($timer, $time)
@@ -323,7 +323,7 @@ class pinba
     {
         if (ini_get('pinba.enabled'))
         {
-            $struct = self::get_packet_info($script_name);
+            $struct = static::get_packet_info($script_name);
             $message = prtbfr::encode($struct, self::$message_proto);
 
             $server = ini_get('pinba.server');
@@ -347,7 +347,7 @@ class pinba
     */
     static protected function get_packet_info($script_name=null)
     {
-        $struct = self::get_info();
+        $struct = static::get_info();
         // massage info into correct format for pinba server
         $struct["status"] = 0; /// @todo
         $struct["hostname"] = self::$hostname;
