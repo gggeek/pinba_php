@@ -1,3 +1,4 @@
+. update to latest protobuf implementation
 . test: do we need to set udp socket to non blocking?
 . measuring resp. body size
 . recovering response status (eg. from http://www.php.net/manual/en/features.connection-handling.php)
