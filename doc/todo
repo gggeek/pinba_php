@@ -1,0 +1,11 @@
+. test: do we need to set udp socket to non blocking?
+. measuring resp. body size
+. recovering response status (eg. from http://www.php.net/manual/en/features.connection-handling.php)
+. stop all running timers when flushing() ?
+. check native exetension functionality: can a script flush many times or not?
+. replicate pinba_timer_add function (not documented but existing)
+. replicate error messages (notices) thrown by native extension
+. add a script that converts the .proto spec to our php structure, to accommodate future changes
+. test on php 5.1, 5.2
+. more todos in the source code
+. check: shall we include MIT license for the parts of code dealing with GPB?
