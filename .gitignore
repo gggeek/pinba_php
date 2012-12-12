@@ -1,0 +1,4 @@
+*.PHPEditProject
+*.bak
+build
+dist
