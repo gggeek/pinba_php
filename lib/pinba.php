@@ -353,7 +353,7 @@ class pinba
         $struct["hostname"] = self::$hostname;
         if ($script_name != null)
         {
-            $struct["server_name"] = $script_name;
+            $struct["script_name"] = $script_name;
         }
         foreach(array(
                 "mem_peak_usage" => "memory_peak",
