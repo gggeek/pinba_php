@@ -4,12 +4,16 @@
  * Encoding code courtesy of Protobuf for PHP lib by Iván -DrSlump- Montes: http://github.com/drslump/Protobuf-PHP
  *
  * @author G. Giunta
- * @copyright (C) G. Giunta 2011 - 2012
+ * @copyright (C) G. Giunta 2011 - 2022
  *
  * @todo find a better name for this helper class...
  */
 
-class prtbfr
+namespace PinbaPhp\Polyfill;
+
+use Exception;
+
+class Prtbfr
 {
     const WIRETYPE_VARINT = 0;
     const WIRETYPE_FIXED64 = 1;
@@ -56,7 +60,7 @@ class prtbfr
     *
     * @todo support encoding objects, not only arrays
     */
-    static function encode($struct, $proto)
+    public static function encode($struct, $proto)
     {
         $result = '';
         ksort($proto, SORT_NUMERIC);
@@ -256,5 +260,3 @@ class prtbfr
         return self::$_endianness === self::BIG_ENDIAN;
     }
 }
-
-?>

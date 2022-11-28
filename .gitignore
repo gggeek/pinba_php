@@ -1,4 +1,7 @@
-*.PHPEditProject
-*.bak
-build
-dist
+/.scannerwork
+/.idea
+/build/*
+/dist/*
+/vendor/*
+/.phpunit.result.cache
+/composer.lock

@@ -4,10 +4,13 @@
  *
  * @see http://pinba.org/wiki/Manual:PHP_extension
  * @author G. Giunta
- * @copyright (C) G. Giunta 2011 - 2012
+ * @copyright (C) G. Giunta 2011 - 2022
  */
 
-class pinba
+namespace PinbaPhp\Polyfill;
+
+
+class Pinba
 {
     protected static $timers = array();
     protected static $script_name = null;
@@ -16,22 +19,22 @@ class pinba
     protected static $start = null;
     protected static $shutdown_registered = false;
     protected static $message_proto = array(
-        1 => array("hostname", prtbfr::TYPE_STRING),
-        2 => array("server_name", prtbfr::TYPE_STRING),
-        3 => array("script_name", prtbfr::TYPE_STRING),
-        4 => array("request_count", prtbfr::TYPE_UINT32),
-        5 => array("document_size", prtbfr::TYPE_UINT32),
-        6 => array("memory_peak", prtbfr::TYPE_UINT32),
-        7 => array("request_time", prtbfr::TYPE_UINT32),
-        8 => array("ru_utime", prtbfr::TYPE_UINT32),
-        9 => array("ru_stime", prtbfr::TYPE_UINT32),
-        10 => array("timer_hit_count", prtbfr::TYPE_UINT32, prtbfr::ELEMENT_REPEATED),
-        11 => array("timer_value", prtbfr::TYPE_UINT32, prtbfr::ELEMENT_REPEATED),
-        12 => array("timer_tag_count", prtbfr::TYPE_UINT32, prtbfr::ELEMENT_REPEATED),
-        13 => array("timer_tag_name", prtbfr::TYPE_UINT32, prtbfr::ELEMENT_REPEATED),
-        14 => array("timer_tag_value", prtbfr::TYPE_UINT32, prtbfr::ELEMENT_REPEATED),
-        15 => array("dictionary", prtbfr::TYPE_STRING, prtbfr::ELEMENT_REPEATED),
-        16 => array("status", prtbfr::TYPE_UINT32, prtbfr::ELEMENT_OPTIONAL)
+        1 => array("hostname", Prtbfr::TYPE_STRING),
+        2 => array("server_name", Prtbfr::TYPE_STRING),
+        3 => array("script_name", Prtbfr::TYPE_STRING),
+        4 => array("request_count", Prtbfr::TYPE_UINT32),
+        5 => array("document_size", Prtbfr::TYPE_UINT32),
+        6 => array("memory_peak", Prtbfr::TYPE_UINT32),
+        7 => array("request_time", Prtbfr::TYPE_UINT32),
+        8 => array("ru_utime", Prtbfr::TYPE_UINT32),
+        9 => array("ru_stime", Prtbfr::TYPE_UINT32),
+        10 => array("timer_hit_count", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
+        11 => array("timer_value", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
+        12 => array("timer_tag_count", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
+        13 => array("timer_tag_name", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
+        14 => array("timer_tag_value", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
+        15 => array("dictionary", Prtbfr::TYPE_STRING, Prtbfr::ELEMENT_REPEATED),
+        16 => array("status", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_OPTIONAL)
     );
 
     /**
@@ -41,7 +44,7 @@ class pinba
     @param array $data optional array with user data, not sent to the server.
     @return resource Always returns new timer resource.
     */
-    static function timer_start($tags, $data=null)
+    public static function timer_start($tags, $data=null)
     {
         $time = microtime(true);
         $timer = count(self::$timers);
@@ -60,7 +63,7 @@ class pinba
     @param resource $timer valid timer resource.
     @return bool Returns true on success and false on failure (if the timer has already been stopped).
     */
-    static function timer_stop($timer)
+    public static function timer_stop($timer)
     {
         $time = microtime(true);
         if (isset(self::$timers[$timer]))
@@ -86,7 +89,7 @@ class pinba
     @param resource $timer valid timer resource.
     @return bool Returns true on success and false on failure.
     */
-    static function timer_delete($timer)
+    public static function timer_delete($timer)
     {
         if (isset(self::$timers[$timer]))
         {
@@ -103,7 +106,7 @@ class pinba
     @param array $tags - an array of tags.
     @return bool
     */
-    static function timer_tags_merge($timer, $tags)
+    public static function timer_tags_merge($timer, $tags)
     {
         if (isset(self::$timers[$timer]))
         {
@@ -120,7 +123,7 @@ class pinba
     @param array $tags - an array of tags.
     @return bool
     */
-    static function timer_tags_replace($timer, $tags)
+    public static function timer_tags_replace($timer, $tags)
     {
         if (isset(self::$timers[$timer]))
         {
@@ -137,7 +140,7 @@ class pinba
     @param array $data an array of user data.
     @return bool Returns true on success and false on failure.
     */
-    static function timer_data_merge($timer, $data)
+    public static function timer_data_merge($timer, $data)
     {
         if (isset(self::$timers[$timer]))
         {
@@ -155,7 +158,7 @@ class pinba
     @param array $data an array of user data.
     @return bool Returns true on success and false on failure.
     */
-    static function timer_data_replace($timer, $data)
+    public static function timer_data_replace($timer, $data)
     {
         if (isset(self::$timers[$timer]))
         {
@@ -185,7 +188,7 @@ class pinba
         }
      @todo what to return if timer is not valid?
     */
-    static function timer_get_info($timer)
+    public static function timer_get_info($timer)
     {
         $time = microtime(true);
         return static::_timer_get_info($timer, $time);
@@ -213,7 +216,7 @@ class pinba
 
     @todo when shall we return false?
     */
-    static function timers_stop()
+    public static function timers_stop()
     {
         $time = microtime(true);
         foreach (self::$timers as &$timer)
@@ -267,7 +270,7 @@ class pinba
         }
     }
     */
-    static function get_info()
+    public static function get_info()
     {
         $time = microtime(true);
         /// @todo can we get more info, such as resource usage?
@@ -295,7 +298,7 @@ class pinba
     @param string $script_name
     @return bool
     */
-    static function script_name_set($script_name)
+    public static function script_name_set($script_name)
     {
         self::$script_name = $script_name;
     }
@@ -306,7 +309,7 @@ class pinba
     @param string $hostname
     @return bool
     */
-    static function hostname_set($hostname)
+    public static function hostname_set($hostname)
     {
         self::$hostname = $hostname;
     }
@@ -319,12 +322,12 @@ class pinba
 
     @todo add IPv6 support (see http://pinba.org/wiki/Manual:PHP_extension)
     */
-    static function flush($script_name=null)
+    public static function flush($script_name=null)
     {
         if (ini_get('pinba.enabled'))
         {
             $struct = static::get_packet_info($script_name);
-            $message = prtbfr::encode($struct, self::$message_proto);
+            $message = Prtbfr::encode($struct, self::$message_proto);
 
             $server = ini_get('pinba.server');
             $port = 30002;
@@ -345,7 +348,7 @@ class pinba
     /**
     * Builds the php array structure to be sent to the pinba server
     */
-    static protected function get_packet_info($script_name=null)
+    protected static function get_packet_info($script_name=null)
     {
         $struct = static::get_info();
         // massage info into correct format for pinba server
@@ -359,8 +362,7 @@ class pinba
                 "mem_peak_usage" => "memory_peak",
                 "req_time" => "request_time",
                 "req_count" => "request_count",
-                "doc_size" => "document_size",
-                "req_time" => "request_time" ) as $old => $new)
+                "doc_size" => "document_size") as $old => $new)
         {
             $struct[$new] = $struct[$old];
         }
@@ -421,7 +423,7 @@ class pinba
     /**
        A function not in the pinba extension api, needed to calculate total req. time
     */
-    static function init( $time=null )
+    public static function init( $time=null )
     {
         if (self::$start == null || $time != null)
         {
@@ -453,6 +455,5 @@ class pinba
 }
 
 // try to start time measurement as soon as we can
+/// @todo move this to bootstrap.php ?
 pinba::init();
-
-?>

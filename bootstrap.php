@@ -7,6 +7,10 @@
  * @copyright (C) G. Giunta 2011 - 2012
  */
 
+use PinbaPHP\Polyfill\Pinba as pinba;
+
+/// @todo add function_exist calls around every function definition
+
 /**
 Creates and starts new timer.
 
@@ -204,5 +208,3 @@ function pinba_flush($script_name=null)
 {
     return pinba::flush($script_name);
 }
-
-?>
