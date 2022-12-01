@@ -9,7 +9,6 @@
 
 namespace PinbaPhp\Polyfill;
 
-
 class Pinba
 {
     protected static $timers = array();
@@ -38,12 +37,12 @@ class Pinba
     );
 
     /**
-    Creates and starts new timer.
-
-    @param array $tags an array of tags and their values in the form of "tag" => "value". Cannot contain numeric indexes for obvious reasons.
-    @param array $data optional array with user data, not sent to the server.
-    @return resource Always returns new timer resource.
-    */
+     * Creates and starts new timer.
+     *
+     * @param array $tags an array of tags and their values in the form of "tag" => "value". Cannot contain numeric indexes for obvious reasons.
+     * @param array $data optional array with user data, not sent to the server.
+     * @return resource Always returns new timer resource.
+     */
     public static function timer_start($tags, $data=null)
     {
         $time = microtime(true);
@@ -58,11 +57,11 @@ class Pinba
     }
 
     /**
-    Stops the timer.
-
-    @param resource $timer valid timer resource.
-    @return bool Returns true on success and false on failure (if the timer has already been stopped).
-    */
+     * Stops the timer.
+     *
+     * @param resource $timer valid timer resource.
+     * @return bool Returns true on success and false on failure (if the timer has already been stopped).
+     */
     public static function timer_stop($timer)
     {
         $time = microtime(true);
@@ -70,7 +69,7 @@ class Pinba
         {
             if (self::$timers[$timer]["started"])
             {
-                if ( function_exists('getrusage'))
+                if (function_exists('getrusage'))
                 {
                     /// @todo measure resource usage
                 }
@@ -82,13 +81,13 @@ class Pinba
     }
 
     /**
-    Deletes the timer.
-
-    Available since: 0.0.6
-
-    @param resource $timer valid timer resource.
-    @return bool Returns true on success and false on failure.
-    */
+     * Deletes the timer.
+     *
+     * Available since: 0.0.6
+     *
+     * @param resource $timer valid timer resource.
+     * @return bool Returns true on success and false on failure.
+     */
     public static function timer_delete($timer)
     {
         if (isset(self::$timers[$timer]))
@@ -100,12 +99,12 @@ class Pinba
     }
 
     /**
-    Merges $tags array with the timer tags replacing existing elements.
-
-    @param resource $timer - valid timer resource
-    @param array $tags - an array of tags.
-    @return bool
-    */
+     * Merges $tags array with the timer tags replacing existing elements.
+     *
+     * @param resource $timer - valid timer resource
+     * @param array $tags - an array of tags.
+     * @return bool
+     */
     public static function timer_tags_merge($timer, $tags)
     {
         if (isset(self::$timers[$timer]))
@@ -117,12 +116,12 @@ class Pinba
     }
 
     /**
-    Replaces timer tags with the passed $tags array.
-
-    @param resource $timer - valid timer resource
-    @param array $tags - an array of tags.
-    @return bool
-    */
+     * Replaces timer tags with the passed $tags array.
+     *
+     * @param resource $timer - valid timer resource
+     * @param array $tags - an array of tags.
+     * @return bool
+     */
     public static function timer_tags_replace($timer, $tags)
     {
         if (isset(self::$timers[$timer]))
@@ -134,12 +133,12 @@ class Pinba
     }
 
     /**
-    Merges $data array with the timer user data replacing existing elements.
-
-    @param resource $timer valid timer resource
-    @param array $data an array of user data.
-    @return bool Returns true on success and false on failure.
-    */
+     * Merges $data array with the timer user data replacing existing elements.
+     *
+     * @param resource $timer valid timer resource
+     * @param array $data an array of user data.
+     * @return bool Returns true on success and false on failure.
+     */
     public static function timer_data_merge($timer, $data)
     {
         if (isset(self::$timers[$timer]))
@@ -151,13 +150,13 @@ class Pinba
     }
 
     /**
-    Replaces timer user data with the passed $data array.
-    Use NULL value to reset user data in the timer.
-
-    @param resource $timer valid timer resource
-    @param array $data an array of user data.
-    @return bool Returns true on success and false on failure.
-    */
+     * Replaces timer user data with the passed $data array.
+     * Use NULL value to reset user data in the timer.
+     *
+     * @param resource $timer valid timer resource
+     * @param array $data an array of user data.
+     * @return bool Returns true on success and false on failure.
+     */
     public static function timer_data_replace($timer, $data)
     {
         if (isset(self::$timers[$timer]))
@@ -169,25 +168,25 @@ class Pinba
     }
 
     /**
-    Returns timer data.
-
-    @param resource $timer - valid timer resource.
-    @return array Output example:
-        array(4) {
-        ["value"]=>
-        float(0.0213)
-        ["tags"]=>
-        array(1) {
-        ["foo"]=>
-        string(3) "bar"
-        }
-        ["started"]=>
-        bool(true)
-        ["data"]=>
-        NULL
-        }
-     @todo what to return if timer is not valid?
-    */
+     * Returns timer data.
+     *
+     * @param resource $timer - valid timer resource.
+     * @return array Output example:
+     *    array(4) {
+     *    ["value"]=>
+     *    float(0.0213)
+     *    ["tags"]=>
+     *    array(1) {
+     *    ["foo"]=>
+     *    string(3) "bar"
+     *    }
+     *    ["started"]=>
+     *    bool(true)
+     *    ["data"]=>
+     *    NULL
+     *    }
+     * @todo what to return if timer is not valid?
+     */
     public static function timer_get_info($timer)
     {
         $time = microtime(true);
@@ -199,7 +198,7 @@ class Pinba
         if (isset(self::$timers[$timer]))
         {
             $timer = self::$timers[$timer];
-            if ( $timer["started"] )
+            if ($timer["started"])
             {
                 $timer["value"] = $time - $timer["value"];
             }
@@ -210,12 +209,12 @@ class Pinba
     }
 
     /**
-    Stops all running timers.
-
-    @return bool
-
-    @todo when shall we return false?
-    */
+     * Stops all running timers.
+     *
+     * @return bool
+     *
+     * @todo when shall we return false?
+     */
     public static function timers_stop()
     {
         $time = microtime(true);
@@ -231,45 +230,45 @@ class Pinba
     }
 
     /**
-    Returns all request data (including timers user data).
-
-    @return array Example:
-    array(9) {
-        ["mem_peak_usage"]=>
-        int(786432)
-        ["req_time"]=>
-        float(0.001529)
-        ["ru_utime"]=>
-        float(0)
-        ["ru_stime"]=>
-        float(0)
-        ["req_count"]=>
-        int(1)
-        ["doc_size"]=>
-        int(0)
-        ["server_name"]=>
-        string(7) "unknown"
-        ["script_name"]=>
-        string(1) "-"
-        ["timers"]=>
-        array(1) {
-            [0]=>
-            array(4) {
-                ["value"]=>
-                float(4.5E-5)
-                ["tags"]=>
-                array(1) {
-                    ["foo"]=>
-                    string(3) "bar"
-                }
-                ["started"]=>
-                bool(true)
-                ["data"]=>
-                NULL
-            }
-        }
-    }
-    */
+     * Returns all request data (including timers user data).
+     *
+     * @return array Example:
+     * array(9) {
+     *    ["mem_peak_usage"]=>
+     *    int(786432)
+     *    ["req_time"]=>
+     *    float(0.001529)
+     *    ["ru_utime"]=>
+     *    float(0)
+     *    ["ru_stime"]=>
+     *    float(0)
+     *    ["req_count"]=>
+     *    int(1)
+     *    ["doc_size"]=>
+     *    int(0)
+     *    ["server_name"]=>
+     *    string(7) "unknown"
+     *    ["script_name"]=>
+     *    string(1) "-"
+     *    ["timers"]=>
+     *    array(1) {
+     *        [0]=>
+     *        array(4) {
+     *            ["value"]=>
+     *            float(4.5E-5)
+     *            ["tags"]=>
+     *            array(1) {
+     *                ["foo"]=>
+     *                string(3) "bar"
+     *            }
+     *            ["started"]=>
+     *            bool(true)
+     *            ["data"]=>
+     *            NULL
+     *        }
+     *    }
+     * }
+     */
     public static function get_info()
     {
         $time = microtime(true);
@@ -292,36 +291,36 @@ class Pinba
     }
 
     /**
-    Set custom script name instead of $_SERVER['SCRIPT_NAME'] used by default.
-    Useful for those using front controllers, when all requests are served by one PHP script.
-
-    @param string $script_name
-    @return bool
-    */
+     * Set custom script name instead of $_SERVER['SCRIPT_NAME'] used by default.
+     * Useful for those using front controllers, when all requests are served by one PHP script.
+     *
+     * @param string $script_name
+     * @return bool
+     */
     public static function script_name_set($script_name)
     {
         self::$script_name = $script_name;
     }
 
     /**
-    Set custom hostname instead of the result of gethostname() used by default.
-
-    @param string $hostname
-    @return bool
-    */
+     * Set custom hostname instead of the result of gethostname() used by default.
+     *
+     * @param string $hostname
+     * @return bool
+     */
     public static function hostname_set($hostname)
     {
         self::$hostname = $hostname;
     }
 
     /**
-    Useful when you need to send request data to the server immediately (for long running scripts).
-    You can use optional argument script_name to set custom script name.
-
-    @param string $script_name
-
-    @todo add IPv6 support (see http://pinba.org/wiki/Manual:PHP_extension)
-    */
+     * Useful when you need to send request data to the server immediately (for long running scripts).
+     * You can use optional argument script_name to set custom script name.
+     *
+     * @param string $script_name
+     *
+     * @todo add IPv6 support (see http://pinba.org/wiki/Manual:PHP_extension)
+     */
     public static function flush($script_name=null)
     {
         if (ini_get('pinba.enabled'))
@@ -333,8 +332,8 @@ class Pinba
             $port = 30002;
             if (count($parts = explode(':', $server)) > 1)
             {
-                $port = $server[1];
-                $server = $server[0];
+                $port = $parts[1];
+                $server = $parts[0];
             }
             $fp = fsockopen("udp://$server", $port, $errno, $errstr);
             if ($fp)
@@ -346,7 +345,7 @@ class Pinba
     }
 
     /**
-    * Builds the php array structure to be sent to the pinba server
+    * Builds the php array structure to be sent to the pinba server.
     */
     protected static function get_packet_info($script_name=null)
     {
@@ -421,9 +420,9 @@ class Pinba
     }
 
     /**
-       A function not in the pinba extension api, needed to calculate total req. time
-    */
-    public static function init( $time=null )
+     * A function not in the pinba extension api, needed to calculate total req. time.
+     */
+    public static function init($time=null)
     {
         if (self::$start == null || $time != null)
         {
@@ -445,15 +444,10 @@ class Pinba
         {
             self::$server_name = $_SERVER['SERVER_NAME'];
         }
-        if ( !self::$shutdown_registered )
+        if (!self::$shutdown_registered)
         {
             self::$shutdown_registered = true;
-            register_shutdown_function('pinba::flush');
+            register_shutdown_function('\PinbaPhp\Polyfill\Pinba::flush');
         }
-
     }
 }
-
-// try to start time measurement as soon as we can
-/// @todo move this to bootstrap.php ?
-pinba::init();

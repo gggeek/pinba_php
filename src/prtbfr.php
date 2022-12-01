@@ -51,15 +51,15 @@ class Prtbfr
     protected static $_endianness = null;
 
     /**
-    * Encodes a php array to protocol buffers format according to proto definition
-    * Example proto definition:
-    * array(
-    *  1 => array("hostname", prtbfr::TYPE_STRING),
-    *  10 => array("timer_hit_count", prtbfr::TYPE_INT, prtbfr::REPEATED)
-    *  )
-    *
-    * @todo support encoding objects, not only arrays
-    */
+     * Encodes a php array to protocol buffers format according to proto definition
+     * Example proto definition:
+     * array(
+     *  1 => array("hostname", prtbfr::TYPE_STRING),
+     *  10 => array("timer_hit_count", prtbfr::TYPE_INT, prtbfr::REPEATED)
+     *  )
+     *
+     * @todo support encoding objects, not only arrays
+     */
     public static function encode($struct, $proto)
     {
         $result = '';
@@ -172,19 +172,19 @@ class Prtbfr
         {
             $bytes = strrev($bytes);
         }
-        $this->write($bytes, 4);
+        return substr($bytes, 0, 4);
     }
 
     protected static function fixed32_encode($value)
     {
         $bytes = pack('N*', $value);
-        $this->write($bytes, 4);
+        return substr($bytes, 0, 4);
     }
 
     protected static function sfixed64_encode($value)
     {
         $bytes = pack('V*', $value & 0xffffffff, $value / (0xffffffff+1));
-        $this->write($bytes, 8);
+        return substr($bytes, 0, 8);
     }
 
     protected static function fixed64_encode($value)
@@ -199,7 +199,7 @@ class Prtbfr
         {
             $bytes = strrev($bytes);
         }
-        $this->write($bytes, 4);
+        return substr($bytes, 0, 4);
     }
 
     protected static function double_encode($value)
@@ -209,7 +209,7 @@ class Prtbfr
         {
             $bytes = strrev($bytes);
         }
-        $this->write($bytes, 8);
+        return substr($bytes, 0, 8);
     }
 
     protected static function wiretype($type, $wire=null)
