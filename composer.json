@@ -1,6 +1,6 @@
 {
     "name": "gggeek/polyfill-pinba",
-    "description": "A pure-php reimplementation of the API exposed by the native Pinba extension",
+    "description": "A pure-php implementation of the API exposed by the native Pinba extension",
     "license": "GPL-2.0",
     "provide": {
         "ext-pinba": "*"
@@ -13,7 +13,6 @@
         "phpunit/phpunit-selenium": "*",
         "yoast/phpunit-polyfills": "*"
     },
-    "suggest": {},
     "autoload": {
         "psr-4": {
             "PinbaPhp\\Polyfill\\": "src/"
