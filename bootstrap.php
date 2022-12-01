@@ -7,7 +7,7 @@
  * @copyright (C) G. Giunta 2011 - 2022
  */
 
-use PinbaPHP\Polyfill\Pinba as pinba;
+use PinbaPhp\Polyfill\Pinba as pinba;
 
 // try to start time measurement as soon as we can
 pinba::init();

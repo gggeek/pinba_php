@@ -16,7 +16,7 @@
     "suggest": {},
     "autoload": {
         "psr-4": {
-            "PhpXmlRpc\\Polyfill\\XmlRpc\\": "src/"
+            "PinbaPhp\\Polyfill\\": "src/"
         },
         "files": [
             "bootstrap.php"
