@@ -66,7 +66,7 @@ jobs:
                     sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/setup/setup_apache.sh
                     sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/setup/setup_php.sh ${{ matrix.php }}
                     sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/setup/setup_composer.sh
-                    sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/setup/setup_pinboard.sh
+                    #sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/setup/setup_pinboard.sh
                     # fix fs perms for recent Apache versions configuration (ie. starting from Jammy)
                     f="$(pwd)"; while [[ $f != / ]]; do sudo chmod +rx "$f"; f=$(dirname "$f"); done;
                     find . -type d -exec chmod +rx {} \;
@@ -74,7 +74,7 @@ jobs:
 
             -   name: start pinba as container
                 run: |
-                    docker run {{ matrix.pinba-container }} &
+                    docker run -d "{{ matrix.pinba-container }}"
 
             # Avoid downloading composer deps on every workflow run. Is this useful for us? Caching the installation of
             # php/apache/privoxy/perl would be more useful...
@@ -125,7 +125,6 @@ jobs:
                     #sudo cat /etc/apache2/sites-available/000-default.conf
                     #ls -ltr /var/log
                     #ls -ltr /var/log/apache2
-                    sudo cat /var/log/privoxy/*
                     sudo cat /var/log/apache2/error.log
                     sudo cat /var/log/apache2/other_vhosts_access.log
                     sudo cat /var/log/php*.log
