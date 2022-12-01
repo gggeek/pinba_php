@@ -29,7 +29,7 @@ For viewing the gathered metrics, check out https://github.com/intaro/pinboard, 
 
 ## License
 
-Use of this software is subject to the terms in the (license)[LICENSE] file
+Use of this software is subject to the terms in the [license](LICENSE) file
 
 [![License](https://poser.pugx.org/gggeek/polyfill-pinba/license)](https://packagist.org/packages/gggeek/polyfill-pinba)
 [![Latest Stable Version](https://poser.pugx.org/gggeek/polyfill-pinba/v/stable)](https://packagist.org/packages/gggeek/polyfill-pinba)
