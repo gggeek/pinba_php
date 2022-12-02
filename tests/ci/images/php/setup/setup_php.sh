@@ -129,7 +129,7 @@ else
             php${PHP_VERSION}-curl \
             php${PHP_VERSION}-dom \
             php${PHP_VERSION}-fpm \
-            php${PHPSUFFIX}-mbstring \
+            php${PHP_VERSION}-mbstring \
             php${PHP_VERSION}-mysql \
             php${PHP_VERSION}-xdebug
 
