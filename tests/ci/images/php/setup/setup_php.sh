@@ -52,6 +52,8 @@ if [ "${PHP_VERSION}" = default ]; then
     else
         PINBAPHP=
     fi
+    # NB: the list of php extensions include some which are not used by our tests bt are required to unlock
+    # installation of our -dev dependencies across phpunit 4/5/8
     # @todo check for mbstring presence in php5 (jessie) packages
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         php${PHPSUFFIX} \
@@ -59,6 +61,7 @@ if [ "${PHP_VERSION}" = default ]; then
         php${PHPSUFFIX}-curl \
         php${PHPSUFFIX}-dom \
         php${PHPSUFFIX}-fpm \
+        php${PHPSUFFIX}-mbstring \
         php${PHPSUFFIX}-mysql \
         ${PINBAPHP} \
         php${PHPSUFFIX}-xdebug
@@ -118,12 +121,15 @@ else
 
         # @todo check if there is a pinba module, taking care to install it from ondrej, not from the os / a different php version
 
+        # NB: the list of php extensions include some which are not used by our tests bt are required to unlock
+        # installation of our -dev dependencies across phpunit 4/5/8
         DEBIAN_FRONTEND=noninteractive apt-get install -y \
             php${PHP_VERSION} \
             php${PHP_VERSION}-cli \
             php${PHP_VERSION}-curl \
             php${PHP_VERSION}-dom \
             php${PHP_VERSION}-fpm \
+            php${PHPSUFFIX}-mbstring \
             php${PHP_VERSION}-mysql \
             php${PHP_VERSION}-xdebug
 

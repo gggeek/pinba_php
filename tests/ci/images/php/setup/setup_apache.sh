@@ -31,11 +31,11 @@ if [ -f /etc/apache2/sites-available/default-ssl.conf ]; then
     rm /etc/apache2/sites-available/default-ssl.conf
 fi
 
-if [ -n "${DOCKER}" ]; then
+if [ -n "${GITHUB_ACTION}" ]; then
+    ln -s "$(pwd)" /var/www/html/pinba
+else
     if [ ! -d /home/docker/build ]; then mkdir -p /home/docker/build; fi
     ln -s /home/docker/build /var/www/html/pinba
-else
-    ln -s "$(pwd)" /var/www/html/pinba
 fi
 
 service apache2 restart
