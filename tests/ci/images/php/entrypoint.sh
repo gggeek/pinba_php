@@ -32,18 +32,17 @@ if [ "$CONTAINER_USER_UID" != "$ORIG_UID" -o "$CONTAINER_USER_GID" != "$ORIG_GID
     groupmod -g "$CONTAINER_USER_GID" "${USERNAME}"
     usermod -u "$CONTAINER_USER_UID" -g "$CONTAINER_USER_GID" "${USERNAME}"
 fi
-if [ $(stat -c '%u' "${CONTAINER_USER_HOME}") != "${CONTAINER_USER_UID}" -o $(stat -c '%g' "${CONTAINER_USER_HOME}") != "${CONTAINER_USER_GID}" ]; then
+if [ "$(stat -c '%u' "${CONTAINER_USER_HOME}")" != "${CONTAINER_USER_UID}" -o "$(stat -c '%g' "${CONTAINER_USER_HOME}")" != "${CONTAINER_USER_GID}" ]; then
     chown "${CONTAINER_USER_UID}":"${CONTAINER_USER_GID}" "${CONTAINER_USER_HOME}"
     chown -R "${CONTAINER_USER_UID}":"${CONTAINER_USER_GID}" "${CONTAINER_USER_HOME}"/.*
     if [ -d /usr/local/php ]; then
         chown -R "${CONTAINER_USER_UID}":"${CONTAINER_USER_GID}" /usr/local/php
     fi
 fi
-# @todo do the same chmod for ${TESTS_ROOT_DIR}, if it's not within CONTAINER_USER_HOME
 
 echo "[$(date)] Fixing Apache configuration..."
 
-sed -e "s?^export TESTS_ROOT_DIR=.*?export TESTS_ROOT_DIR=${TESTS_ROOT_DIR}?g" --in-place /etc/apache2/envvars
+##sed -e "s?^export TESTS_ROOT_DIR=.*?export TESTS_ROOT_DIR=${TESTS_ROOT_DIR}?g" --in-place /etc/apache2/envvars
 sed -e "s?^export APACHE_RUN_USER=.*?export APACHE_RUN_USER=${USERNAME}?g" --in-place /etc/apache2/envvars
 sed -e "s?^export APACHE_RUN_GROUP=.*?export APACHE_RUN_GROUP=${USERNAME}?g" --in-place /etc/apache2/envvars
 

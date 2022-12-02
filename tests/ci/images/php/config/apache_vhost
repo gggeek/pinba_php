@@ -1,27 +1,27 @@
-# Uses env vars:
-# HTTPSERVER
-# TESTS_ROOT_DIR
+## Uses env vars:
+## HTTPSERVER
+## TESTS_ROOT_DIR
 
 <VirtualHost *:80>
 
-  DocumentRoot ${TESTS_ROOT_DIR}
+  DocumentRoot /var/www/html
 
   #ErrorLog "${TESTS_ROOT_DIR}/apache_error.log"
   #CustomLog "${TESTS_ROOT_DIR}/apache_access.log" combined
 
   # Env vars used by the test code, which we get from the environment
-  SetEnv HTTPSERVER ${HTTPSERVER}
+  ##SetEnv HTTPSERVER ${HTTPSERVER}
 
-  <Directory "${TESTS_ROOT_DIR}">
+  <Directory "/var/www/html">
     Options FollowSymLinks MultiViews
     AllowOverride All
 
     Require all granted
 
     # needed for basic auth (PHP_AUTH_USER and PHP_AUTH_PW)
-    RewriteEngine on
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-    RewriteRule .* - [E=REMOTE_USER:%{HTTP:Authorization}]
+    #RewriteEngine on
+    #RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    #RewriteRule .* - [E=REMOTE_USER:%{HTTP:Authorization}]
   </Directory>
 
 </VirtualHost>

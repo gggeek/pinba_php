@@ -18,7 +18,8 @@ RUN mkdir -p /usr/share/man/man1; mkdir -p /usr/share/man/man7; \
     ./setup_php.sh "${php_version}" && \
     ./setup_composer.sh && \
     cd /var/www/html && \
-    /root/build/setup_pinboard.sh
+    /root/build/setup_pinboard.sh && \
+    /root/build/setup_adminer.sh
 
 COPY entrypoint.sh /root/
 RUN chmod 755 /root/entrypoint*.sh

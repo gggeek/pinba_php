@@ -62,12 +62,12 @@ jobs:
             -   name: set up env
                 # @todo add env setup scripts for windows
                 run: |
-                    chmod 755 ./tests/ci/setup/*.sh
-                    sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/setup/setup_apache.sh
-                    sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/setup/setup_php.sh ${{ matrix.php }}
-                    sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/setup/setup_composer.sh
+                    chmod 755 ./tests/ci/images/php/setup/*.sh
+                    sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/images/php/setup/setup_apache.sh
+                    sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/images/php/setup/setup_php.sh ${{ matrix.php }}
+                    sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/images/php/setup/setup_composer.sh
                     # no need for pinboard (yet)
-                    #sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/setup/setup_pinboard.sh
+                    #sudo --preserve-env=GITHUB_ACTIONS ./tests/ci/images/php/setup/setup_pinboard.sh
                     # fix fs perms for recent Apache versions configuration (ie. starting from Jammy)
                     f="$(pwd)"; while [[ $f != / ]]; do sudo chmod +rx "$f"; f=$(dirname "$f"); done;
                     find . -type d -exec chmod +rx {} \;
@@ -93,7 +93,7 @@ jobs:
                     if [ -z "${{ matrix.code-coverage }}" ]; then
                         ./vendor/bin/phpunit -v tests
                     else
-                        ./tests/ci/setup/setup_code_coverage.sh enable
+                        ./tests/ci/images/php/setup/setup_code_coverage.sh enable
                         ./vendor/bin/phpunit -v --coverage-clover=coverage.clover tests
                         if [ -f coverage.clover ]; then
                             wget https://uploader.codecov.io/latest/linux/codecov && \

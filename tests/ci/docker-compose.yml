@@ -2,19 +2,19 @@ version: '3'
 
 services:
 
-    ez:
-        image: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}_php
+    php:
+        image: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}/php
         build:
-            context: .
+            context: ./images/php
             args:
                 ubuntu_version: ${TESTSTACK_UBUNTU_VERSION:-focal}
                 php_version: ${TESTSTACK_PHP_VERSION:-default}
         hostname: php
-        container_name: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}_php
+        container_name: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}-php
         environment:
             ## Configuration used by the boot/setup scripts
             - CONTAINER_USER_UID=${CONTAINER_USER_UID:-1000}
-            - CONTAINER_USER_GID=${CONTAINER_USER_GID:-1000}
+            - CONTAINER_GROUP_GID=${CONTAINER_GROUP_GID:-1000}
 #            - http_proxy
 #            - https_proxy
             # Composer configuration
@@ -39,19 +39,23 @@ services:
 #            - DB_EZ_PASSWORD=${DB_EZ_PASSWORD:-ezp}
 #            - DB_EZ_DATABASE=${DB_EZ_DATABASE:-behattestdb}
             # Configuration used by Symfony when running via phpunit (SYMFONY_ENV up to eZPlatform 2, APP_ENV for eZPlatform3)
-            - APP_ENV=${APP_ENV:-behat}
-            - SYMFONY_ENV=${SYMFONY_ENV:-behat}
+            #- APP_ENV=${APP_ENV:-behat}
+            #- SYMFONY_ENV=${SYMFONY_ENV:-behat}
             # As opposed to TRAVIS=true ;-)
             - DOCKER=true
         volumes:
             - ../../:/home/docker/build
 #            - ${TESTSTACK_APP_DIR:-../../}:/home/test/workspace
 #            - ${TESTSTACK_DATA_DIR:-./data}/.composer/:/home/test/.composer
+        ports:
+            - "${TESTSTACK_WEB_PORT:-8080}:80"
 
     pinba:
-        image: tony2001/pinba
+        image: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}/pinba
+        build:
+            context: ./images/pinba
         hostname: pinba
-        container_name: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}_pinba
+        container_name: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}-pinba
         environment:
 #            - CONTAINER_USER_UID=${CONTAINER_USER_UID:-1000}
 #            - CONTAINER_USER_GID=${CONTAINER_USER_GID:-1000}
@@ -82,7 +86,7 @@ services:
     pinba2:
         image: anchorfree/pinba2
         hostname: pinba2
-        container_name: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}_pinba2
+        container_name: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}-pinba2
         environment:
             #            - CONTAINER_USER_UID=${CONTAINER_USER_UID:-1000}
             #            - CONTAINER_USER_GID=${CONTAINER_USER_GID:-1000}

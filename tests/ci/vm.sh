@@ -1,20 +1,14 @@
 #!/usr/bin/env bash
 
 ## @todo fix:
-# set env vars CONTAINER_USER_UID,CONTAINER_USER_GID before running docker or dc
-# setup app on build, not on boot
-# wait_for_bootstrap,
-# cleanup vendors
-# runtests
-# resetdb
-# simplify build options
+#   runtests
+#   resetdb
+# @todo simplify/verify cli options
 
 # Manage the whole set of containers and run tests without having to learn Docker
 
 # vars
-BOOTSTRAP_OK_FILE=/var/run/bootstrap_ok
 WEB_USER=docker
-BOOTSTRAP_TIMEOUT=600
 DOCKER_COMPOSE=docker-compose
 INTERACTIVE=
 PARALLEL_BUILD=
@@ -24,7 +18,7 @@ COVERAGE_OPTION=
 SILENT=false
 TTY=
 VERBOSITY=
-WEB_CONTAINER=
+WEB_CONTAINER=${COMPOSE_PROJECT_NAME:-pinbapolyfill}-php
 
 help() {
     printf "Usage: vm.sh [OPTIONS] COMMAND [OPTARGS]
@@ -37,7 +31,7 @@ Commands:
                         - containers      removes all the project's containers and their images
                         - dead-images     removes unused docker images. Can be quite beneficial to free up space
                         - docker-logs     NB: for this to work, you'll need to run this script as root, eg. with sudo -E
-                        - logs            removes log files from the databases, webservers
+                        - vendors         removes composers vendors and locks file
     enter             run a shell in the test container
     exec \$cmd         execute a single shell command in the test container
     images [\$svc]     list container images
@@ -62,11 +56,12 @@ Advanced Options:
     -i                interactive - when running 'exec'
     -o PROVIDER       generate and upload code coverage data - when running 'runtests'. Providers: codecov, scrutinizer
     -t                allocate a pseudo-TTY - when running 'exec'
+
+Env vars: TESTSTACK_UBUNTU_VERSION (focal), TESTSTACK_PHP_VERSION (default), TESTSTACK_WEB_PORT (80)
 "
 }
 
 create_compose_command() {
-    DOCKER_COMPOSE="${DOCKER_COMPOSE} -f docker-compose.yml -f docker-compose-${DB_TYPE}.yml"
     DOCKER_TESTSTACK_QUIET=${DOCKER_COMPOSE/ --verbose/}
 }
 
@@ -88,12 +83,10 @@ build() {
     echo "[$(date)] Starting Containers..."
 
     if [ ${RECREATE} = 'true' ]; then
-        ${DOCKER_COMPOSE} up -d --force-recreate || exit $?
+        ${DOCKER_COMPOSE} up -d --force-recreate
     else
-        ${DOCKER_COMPOSE} up -d || exit $?
+        ${DOCKER_COMPOSE} up -d
     fi
-
-    wait_for_bootstrap all
     RETCODE=$?
 
     if [ $RETCODE -eq 0 ]; then
@@ -148,9 +141,9 @@ cleanup() {
             done
         ;;
         vendors)
-            # @todo it would be better to do the removal from outside the container, but we would have to be sure of the
-            #       location of the test stack compared to the project's root
-            docker exec "${WEB_CONTAINER}" su "${WEB_USER}" -c "../teststack/bin/cleanup.sh vendors"
+            # we are executing in the project's root, thanks to a cd call at the start
+            if [ -f composer.lock ]; then rm composer.lock; fi
+            if [ -d vendors ]; then rm -rf vendors; fi
         ;;
         *)
             printf "\n\e[31mERROR:\e[0m unknown cleanup target ${1}\n\n" >&2
@@ -168,76 +161,10 @@ cleanup_dead_docker_images() {
     fi
 }
 
-# Wait until containers have fully booted
-wait_for_bootstrap() {
-##
-return 0
-
-    if [ ${BOOTSTRAP_TIMEOUT} -le 0 ]; then
-        return 0
-    fi
-
-    case "${1}" in
-        all)
-            # q: check all services or only the running ones?
-            #BOOTSTRAP_CONTAINERS=$(${DOCKER_TESTSTACK_QUIET} config --services)
-            BOOTSTRAP_CONTAINERS=$(${DOCKER_TESTSTACK_QUIET} ps --services | tr '\n' ' ')
-        ;;
-        app)
-            BOOTSTRAP_CONTAINERS='ez'
-        ;;
-        *)
-            #printf "\n\e[31mERROR:\e[0m unknown booting container: '${1}'\n\n" >&2
-            #help
-            #exit 1
-            # @todo add check that this service is actually defined
-            BOOTSTRAP_CONTAINERS=${1}
-        ;;
-    esac
-
-    echo "[$(date)] Waiting for containers bootstrap to finish: ${BOOTSTRAP_CONTAINERS}..."
-
-     START_TIME=$SECONDS
-     ELAPSED=0
-     i=0
-     while [ $ELAPSED -le "${BOOTSTRAP_TIMEOUT}" ]; do
-        sleep 1
-        BOOTSTRAP_OK=''
-        for BS_CONTAINER in ${BOOTSTRAP_CONTAINERS}; do
-            printf "Waiting for ${BS_CONTAINER} ... "
-            # @todo fix this check for the case of container not running / tty issues / etc...
-            #       Eg. use instead a check such as `bash -c 'ps auxwww | fgrep "tail -f /dev/null" | fgrep -v grep'` ?
-            OUT=$(${DOCKER_TESTSTACK_QUIET} exec -T ${BS_CONTAINER} cat ${BOOTSTRAP_OK_FILE} 2>&1)
-            RETCODE=$?
-            if [ ${RETCODE} -eq 0 ]; then
-                printf "\e[32mdone\e[0m\n"
-                BOOTSTRAP_OK="${BOOTSTRAP_OK} ${BS_CONTAINER}"
-            else
-                echo
-                # to debug:
-                #echo $OUT;
-            fi
-        done
-        if [ -n "${BOOTSTRAP_OK}" ]; then
-            for BS_CONTAINER in ${BOOTSTRAP_OK}; do
-                BOOTSTRAP_CONTAINERS=${BOOTSTRAP_CONTAINERS//${BS_CONTAINER}/}
-            done
-            if [ -z  "${BOOTSTRAP_CONTAINERS// /}" ]; then
-                break
-            fi
-        fi
-        i=$(( i + 1 ))
-        ELAPSED=$(( SECONDS - START_TIME ))
-    done
-    if [ $i -gt 0 ]; then echo; fi
-
-    if [ -n "${BOOTSTRAP_CONTAINERS// /}" ]; then
-        printf "\n\e[31mBootstrap process did not finish within ${BOOTSTRAP_TIMEOUT} seconds\e[0m\n\n" >&2
-        # @todo we could show the docker logs
-        return 1
-    fi
-
-    return 0
+load_config() {
+    export CONTAINER_USER_UID="$(id -u)"
+    export CONTAINER_USER_GID="$(id -g)"
+    create_compose_command
 }
 
 # @todo move to a function
@@ -284,9 +211,9 @@ COMMAND=$1
 
 check_requirements
 
-cd "$(dirname -- "${BASH_SOURCE[0]}"})"
+load_config
 
-WEB_CONTAINER=${COMPOSE_PROJECT_NAME:-pinbapolyfill}_php
+cd "$(dirname -- "${BASH_SOURCE[0]}"})"
 
 case "${COMMAND}" in
     build)
@@ -356,17 +283,9 @@ case "${COMMAND}" in
 
     start)
         if [ ${RECREATE} = 'true' ]; then
-            ${DOCKER_COMPOSE} up -d --force-recreate || exit $?
+            ${DOCKER_COMPOSE} up -d --force-recreate
         else
-            ${DOCKER_COMPOSE} up -d ${2} || exit $?
-        fi
-
-        if [ -z "${2}" ]; then
-            wait_for_bootstrap all
-            exit $?
-        else
-            wait_for_bootstrap ${2}
-            exit $?
+            ${DOCKER_COMPOSE} up -d ${2}
         fi
     ;;
 

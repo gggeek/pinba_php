@@ -2,7 +2,8 @@
 
 # Install and configure apache2
 # Has to be run as admin
-# @todo make this work across all ubuntu versions (precise to jammy)
+# @todo test: does this work across all ubuntu versions (precise to jammy)?
+# @todo pass in web root dir as arg
 
 echo "Installing and configuring Apache2..."
 
@@ -30,12 +31,12 @@ if [ -f /etc/apache2/sites-available/default-ssl.conf ]; then
     rm /etc/apache2/sites-available/default-ssl.conf
 fi
 
-if [ -n "${GITHUB_ACTIONS}" ]; then
-    echo "export TESTS_ROOT_DIR=$(pwd)" >> /etc/apache2/envvars
+if [ -n "${DOCKER}" ]; then
+    if [ ! -d /home/docker/build ]; then mkdir -p /home/docker/build; fi
+    ln -s /home/docker/build /var/www/html/pinba
 else
-    echo "export TESTS_ROOT_DIR=/var/www/html" >> /etc/apache2/envvars
+    ln -s "$(pwd)" /var/www/html/pinba
 fi
-echo "export HTTPSERVER=localhost" >> /etc/apache2/envvars
 
 service apache2 restart
 

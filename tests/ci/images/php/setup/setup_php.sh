@@ -47,6 +47,11 @@ if [ "${PHP_VERSION}" = default ]; then
     else
         PHPSUFFIX=
     fi
+    if [ "${DEBIAN_VERSION}" = bionic -o "${DEBIAN_VERSION}" = focal -o "${DEBIAN_VERSION}" = stretch -o "${DEBIAN_VERSION}" = buster -o "${DEBIAN_VERSION}" = bullseye ]; then
+        PINBAPHP=php-pinba
+    else
+        PINBAPHP=
+    fi
     # @todo check for mbstring presence in php5 (jessie) packages
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         php${PHPSUFFIX} \
@@ -55,6 +60,7 @@ if [ "${PHP_VERSION}" = default ]; then
         php${PHPSUFFIX}-dom \
         php${PHPSUFFIX}-fpm \
         php${PHPSUFFIX}-mysql \
+        ${PINBAPHP} \
         php${PHPSUFFIX}-xdebug
 else
     # on GHA runners ubuntu version, php 7.4 and 8.0 seem to be preinstalled. Remove them if found
@@ -109,6 +115,8 @@ else
         DEBIAN_FRONTEND=noninteractive apt-get install -y language-pack-en-base software-properties-common
         LC_ALL=en_US.UTF-8 add-apt-repository ppa:ondrej/php
         apt-get update
+
+        # @todo check if there is a pinba module, taking care to install it from ondrej, not from the os / a different php version
 
         DEBIAN_FRONTEND=noninteractive apt-get install -y \
             php${PHP_VERSION} \
