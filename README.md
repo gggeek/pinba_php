@@ -7,27 +7,6 @@ See http://pinba.org for the original.
 
 *WORK IN PROGRESS*
 
-## Notes
-
-Includes code from the Protobuf for PHP lib by Iván -DrSlump- Montes: https://github.com/drslump/Protobuf-PHP
-
-Other known packages exist implementing the same idea, such as: https://github.com/vearutop/pinba-pure-php
-
-## Compatibility
-
-We strive to implement the same API as Pinba extension ver. 1.1.2.
-
-As for the server side, the library is tested for compatibility against both a Pinba server and a Pinba2 one.
-
-Known issues:
-- lack in precision in time reporting: the time reported for page execution will be much shorter with any php code than
-  it can be measured with a php extension. We suggest thus not to take the reported time as an absolute value, but rather
-  use it to check macro-issues, such as a page taking 10 seconds to run, or 10 times as much as another page
-- impact on system performances: the cpu time and ram used by this implementation (which runs on every page of your site!)
-  are also forcefully bigger than the resources used by the php extension. It is up to you to decide if the extra load
-  added to your server by using this package is worth it or not
-- other: many... (to be documented)
-
 ## Requirements
 
 PHP 5.3 or any later version.
@@ -52,6 +31,27 @@ unless you have added explicit calls to the pinba api in your php code.
 See the API described at https://github.com/tony2001/pinba_engine/wiki/PHP-extension
 
 For viewing the gathered metrics, check out https://github.com/intaro/pinboard or https://github.com/ClickHouse-Ninja/Proton
+
+## Compatibility
+
+We strive to implement the same API as Pinba extension ver. 1.1.2.
+
+As for the server side, the library is tested for compatibility against both a Pinba server and a Pinba2 one.
+
+Known issues:
+- lack in precision in time reporting: the time reported for page execution will be much shorter with any php code than
+  it can be measured with a php extension. We suggest thus not to take the reported time as an absolute value, but rather
+  use it to check macro-issues, such as a page taking 10 seconds to run, or 10 times as much as another page
+- impact on system performances: the cpu time and ram used by this implementation (which runs on every page of your site!)
+  are also forcefully bigger than the resources used by the php extension. It is up to you to decide if the extra load
+  added to your server by using this package is worth it or not
+- other: many... (to be documented)
+
+## Notes
+
+Includes code from the Protobuf for PHP lib by Iván -DrSlump- Montes: https://github.com/drslump/Protobuf-PHP
+
+Other known packages exist implementing the same idea, such as: https://github.com/vearutop/pinba-pure-php
 
 ## Running tests
 
