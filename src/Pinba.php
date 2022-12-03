@@ -18,9 +18,9 @@ class Pinba
     protected static $start = null;
     protected static $shutdown_registered = false;
     protected static $message_proto = array(
-        1 => array("hostname", Prtbfr::TYPE_STRING),
-        2 => array("server_name", Prtbfr::TYPE_STRING),
-        3 => array("script_name", Prtbfr::TYPE_STRING),
+        1 => array("hostname", Prtbfr::TYPE_STRING), // bytes for pinba2
+        2 => array("server_name", Prtbfr::TYPE_STRING), // bytes for pinba2
+        3 => array("script_name", Prtbfr::TYPE_STRING), // bytes for pinba2
         4 => array("request_count", Prtbfr::TYPE_UINT32),
         5 => array("document_size", Prtbfr::TYPE_UINT32),
         6 => array("memory_peak", Prtbfr::TYPE_UINT32),
@@ -32,8 +32,18 @@ class Pinba
         12 => array("timer_tag_count", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
         13 => array("timer_tag_name", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
         14 => array("timer_tag_value", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
-        15 => array("dictionary", Prtbfr::TYPE_STRING, Prtbfr::ELEMENT_REPEATED),
+        15 => array("dictionary", Prtbfr::TYPE_STRING, Prtbfr::ELEMENT_REPEATED), // bytes for pinba2
         16 => array("status", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_OPTIONAL)
+        /// @todo new fields to add:
+        /*
+        17 => array("memory_footprint", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_OPTIONAL),
+        18 => array("requests", Prtbfr::TYPE_, Prtbfr::ELEMENT_REPEATED), /// @todo support Request
+        19 => array("schema", Prtbfr::TYPE_STRING, Prtbfr::ELEMENT_OPTIONAL), // bytes for pinba2
+        20 => array("tag_name", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
+        21 => array("tag_value", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
+        22 => array("timer_ru_utime", Prtbfr::TYPE_FLOAT, Prtbfr::ELEMENT_REPEATED),
+        23 => array("timer_ru_stime", Prtbfr::TYPE_FLOAT, Prtbfr::ELEMENT_REPEATED),
+        */
     );
 
     /**
@@ -192,7 +202,7 @@ class Pinba
      * Returns timer data.
      *
      * @param int $timer - valid timer resource.
-     * @return array Output example:
+     * @return array|false Output example:
      *    array(4) {
      *    ["value"]=>
      *    float(0.0213)
@@ -206,7 +216,6 @@ class Pinba
      *    ["data"]=>
      *    NULL
      *    }
-     * @todo what to return if timer is not valid?
      */
     public static function timer_get_info($timer)
     {
@@ -226,15 +235,14 @@ class Pinba
             /// @todo round the timer value?
             return $timer;
         }
-        return array();
+        trigger_error("pinba_timer_get_info(): supplied resource is not a valid pinba timer resource", E_USER_WARNING);
+        return false;
     }
 
     /**
      * Stops all running timers.
      *
      * @return bool
-     *
-     * @todo when shall we return false?
      */
     public static function timers_stop()
     {
@@ -247,7 +255,7 @@ class Pinba
                 $timer["value"] = $time - $timer["value"];
             }
         }
-        return false;
+        return true;
     }
 
     /**
@@ -364,6 +372,7 @@ class Pinba
                 (int)$port = $parts[1];
                 $server = $parts[0];
             }
+            /// @todo log a specific warning in case of failures to open the udp socket?
             $fp = fsockopen("udp://$server", $port, $errno, $errstr);
             if ($fp)
             {

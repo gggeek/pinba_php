@@ -5,10 +5,21 @@ Pure-php reimplementation of the "PHP extension for Pinba"
 
 See http://pinba.org for the original
 
-Includes code from the Protobuf for PHP lib by Iván -DrSlump- Montes:
-https://github.com/drslump/Protobuf-PHP
+Includes code from the Protobuf for PHP lib by Iván -DrSlump- Montes: https://github.com/drslump/Protobuf-PHP
 
 Other known packages implementing the same idea: https://github.com/vearutop/pinba-pure-php
+
+*WORK IN PROGRESS*
+
+## Compatibility
+
+We strive to implement the same API as Pinba extension v 1.1.2.
+
+As for the server side, the library is tested both against a Pinba server and a Pinba2 one.
+
+Known issues:
+- the time reported for page execution will be much shorter with any php code than it can be measured with a php extension
+- other: many... (to be documented)
 
 ## Requirements
 
@@ -25,7 +36,7 @@ are available as Docker Container images for trying out.
 
 See the API described at https://github.com/tony2001/pinba_engine/wiki/PHP-extension
 
-For viewing the gathered metrics, check out https://github.com/intaro/pinboard, https://github.com/ClickHouse-Ninja/Proton
+For viewing the gathered metrics, check out https://github.com/intaro/pinboard or https://github.com/ClickHouse-Ninja/Proton
 
 ## License
 

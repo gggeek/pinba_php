@@ -14,6 +14,14 @@ class ClassTest extends TestCase
         ini_set('pinba.server', getenv('PINBA_SERVER') . ':' . getenv('PINBA_PORT'));
     }
 
+    /**
+     * @before
+     */
+    public static function setTestUp()
+    {
+        /// @todo delete all existing timers
+    }
+
     function testGetInfo()
     {
         $v = pinba::get_info();

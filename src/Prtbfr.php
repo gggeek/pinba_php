@@ -71,16 +71,17 @@ class Prtbfr
             $cardinality = isset($def[2]) ? $def[2] : self::ELEMENT_REQUIRED;
             switch($cardinality)
             {
+                case self::ELEMENT_REPEATED:
+                    /// @todo we should probably allow non existing struct elements to count as empty arrays
+                    foreach($struct[$field] as $value)
+                    {
+                        $result .= self::encode_value($value, $type, $pos);
+                    }
+                    break;
                 case self::ELEMENT_OPTIONAL:
                     if (isset($struct[$field]) && $struct[$field] !== null)
                     {
                         $result .= self::encode_value($struct[$field], $type, $pos);
-                    }
-                    break;
-                case self::ELEMENT_REPEATED:
-                    foreach($struct[$field] as $value)
-                    {
-                        $result .= self::encode_value($value, $type, $pos);
                     }
                     break;
                 default:
