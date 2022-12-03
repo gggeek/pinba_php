@@ -275,13 +275,14 @@ class Pinba
         /// @todo can we get more info, such as resource usage?
         $results = array(
             "mem_peak_usage" => memory_get_peak_usage(true),
-            "req_time"=> $time - self::$start,
-            "ru_utime"=> 0,
-            "ru_stime"=> 0,
-            "req_count"=> 0,
-            "doc_size"=> 0,
-            "server_name"=> (self::$server_name != null ? self::$server_name : 'unknown'),
-            "script_name"=> (self::$script_name != null ? self::$script_name : 'unknown')
+            "req_time" => $time - self::$start,
+            "ru_utime" => 0,
+            "ru_stime" => 0,
+            "req_count" => 0,
+            "doc_size" => 0,
+            "server_name" => (self::$server_name != null ? self::$server_name : 'unknown'),
+            "script_name" => (self::$script_name != null ? self::$script_name : 'unknown'),
+            'timers' => array()
         );
         foreach(self::$timers as $i => $t)
         {
@@ -332,7 +333,7 @@ class Pinba
             $port = 30002;
             if (count($parts = explode(':', $server)) > 1)
             {
-                $port = $parts[1];
+                (int)$port = $parts[1];
                 $server = $parts[0];
             }
             $fp = fsockopen("udp://$server", $port, $errno, $errstr);
@@ -401,6 +402,12 @@ class Pinba
                 $struct["timers"][$id]['tagids'][$tagid] = $valueid;
             }
         }
+        $struct["timer_hit_count"] = array();
+        $struct["timer_value"] = array();
+        $struct["timer_hit_count"] = array();
+        $struct["timer_tag_count"] = array();
+        $struct["timer_tag_name"] = array();
+        $struct["timer_tag_value"] = array();
         foreach($struct["timers"] as $timer)
         {
             $struct["timer_hit_count"][] = $timer["count"];
@@ -412,6 +419,7 @@ class Pinba
                 $struct["timer_tag_value"][] = $val;
             }
         }
+        $struct["dictionary"] = array();
         foreach($dict as $tag)
         {
             $struct["dictionary"][] = $tag;
