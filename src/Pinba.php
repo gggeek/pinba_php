@@ -17,18 +17,19 @@ class Pinba
     protected static $hostname = null;
     protected static $start = null;
     protected static $shutdown_registered = false;
-    protected static $message_proto = array(
+
+    public static $message_proto = array(
         1 => array("hostname", Prtbfr::TYPE_STRING), // bytes for pinba2
         2 => array("server_name", Prtbfr::TYPE_STRING), // bytes for pinba2
         3 => array("script_name", Prtbfr::TYPE_STRING), // bytes for pinba2
         4 => array("request_count", Prtbfr::TYPE_UINT32),
         5 => array("document_size", Prtbfr::TYPE_UINT32),
         6 => array("memory_peak", Prtbfr::TYPE_UINT32),
-        7 => array("request_time", Prtbfr::TYPE_UINT32),
-        8 => array("ru_utime", Prtbfr::TYPE_UINT32),
-        9 => array("ru_stime", Prtbfr::TYPE_UINT32),
+        7 => array("request_time", Prtbfr::TYPE_FLOAT),
+        8 => array("ru_utime", Prtbfr::TYPE_FLOAT),
+        9 => array("ru_stime", Prtbfr::TYPE_FLOAT),
         10 => array("timer_hit_count", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
-        11 => array("timer_value", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
+        11 => array("timer_value", Prtbfr::TYPE_FLOAT, Prtbfr::ELEMENT_REPEATED),
         12 => array("timer_tag_count", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
         13 => array("timer_tag_name", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
         14 => array("timer_tag_value", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
@@ -302,13 +303,18 @@ class Pinba
     public static function get_info()
     {
         $time = microtime(true);
-        /// @todo can we get more info, such as resource usage?
+        if (function_exists('getrusage')) {
+            $rUsage = getrusage();
+        } else {
+            $rUsage = array();
+        }
+
         $results = array(
             'mem_peak_usage' => memory_get_peak_usage(true),
             'req_time' => $time - self::$start,
             'ru_utime' => 0,
             'ru_stime' => 0,
-            'req_count' => 0,
+            'req_count' => 0, /// @todo should we default to 1 ?
             'doc_size' => 0,
             'schema' => '',
             'server_name' => (self::$server_name != null ? self::$server_name : 'unknown'),
@@ -317,10 +323,19 @@ class Pinba
             'timers' => array(),
             'tags' => array()
         );
+
         foreach(self::$timers as $i => $t)
         {
             $results['timers'][] = self::_timer_get_info($i, $time);
         }
+
+        if (isset($rUsage['ru_utime.tv_usec'])) {
+            $results['ru_utime'] = $rUsage['ru_utime.tv_usec'] / 1000000;
+        }
+        if (isset($rUsage['ru_utime.tv_usec'])) {
+            $results['ru_stime'] = $rUsage['ru_stime.tv_usec'] / 1000000;
+        }
+
         return $results;
     }
 
@@ -373,7 +388,7 @@ class Pinba
             $fp = fsockopen("udp://$server", $port, $errno, $errstr);
             if ($fp)
             {
-                fwrite($fp, $message);
+                fwrite($fp, $message, strlen($message));
                 fclose($fp);
             }
         }
@@ -467,6 +482,7 @@ class Pinba
         $struct["tag_value"] = array();
         $struct["timer_ru_utime"] = array();
         $struct["timer_ru_stime"] = array();
+
         return $struct;
     }
 
