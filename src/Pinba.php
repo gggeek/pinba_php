@@ -75,6 +75,7 @@ class Pinba
                 }
                 self::$timers[$timer]["started"] = false;
                 self::$timers[$timer]["value"] = $time - self::$timers[$timer]["value"];
+                return true;
             }
         }
         return false;
@@ -250,6 +251,8 @@ class Pinba
      *    string(7) "unknown"
      *    ["script_name"]=>
      *    string(1) "-"
+     *    ["hostname"]=>
+     *    string(3) "php"
      *    ["timers"]=>
      *    array(1) {
      *        [0]=>
@@ -267,6 +270,8 @@ class Pinba
      *            NULL
      *        }
      *    }
+     *    ["tags"] =>
+     *    array(0) {}
      * }
      */
     public static function get_info()
@@ -274,15 +279,18 @@ class Pinba
         $time = microtime(true);
         /// @todo can we get more info, such as resource usage?
         $results = array(
-            "mem_peak_usage" => memory_get_peak_usage(true),
-            "req_time" => $time - self::$start,
-            "ru_utime" => 0,
-            "ru_stime" => 0,
-            "req_count" => 0,
-            "doc_size" => 0,
-            "server_name" => (self::$server_name != null ? self::$server_name : 'unknown'),
-            "script_name" => (self::$script_name != null ? self::$script_name : 'unknown'),
-            'timers' => array()
+            'mem_peak_usage' => memory_get_peak_usage(true),
+            'req_time' => $time - self::$start,
+            'ru_utime' => 0,
+            'ru_stime' => 0,
+            'req_count' => 0,
+            'doc_size' => 0,
+            'schema' => '',
+            'server_name' => (self::$server_name != null ? self::$server_name : 'unknown'),
+            'script_name' => (self::$script_name != null ? self::$script_name : 'unknown'),
+            'hostname' => (self::$hostname != null ? self::$hostname : 'unknown'),
+            'timers' => array(),
+            'tags' => array()
         );
         foreach(self::$timers as $i => $t)
         {
@@ -404,7 +412,6 @@ class Pinba
         }
         $struct["timer_hit_count"] = array();
         $struct["timer_value"] = array();
-        $struct["timer_hit_count"] = array();
         $struct["timer_tag_count"] = array();
         $struct["timer_tag_name"] = array();
         $struct["timer_tag_value"] = array();
@@ -442,7 +449,14 @@ class Pinba
         }
         if (self::$hostname == null)
         {
-            self::$hostname = gethostname();
+            if (php_sapi_name() == 'cli')
+            {
+                self::$hostname = 'php';
+            }
+            else
+            {
+                self::$hostname = gethostname();
+            }
         }
         if (self::$script_name == null && isset($_SERVER['SCRIPT_NAME']))
         {
