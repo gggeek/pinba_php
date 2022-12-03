@@ -19,7 +19,7 @@ class ClassTest extends TestCase
      */
     public static function setTestUp()
     {
-        /// @todo delete all existing timers
+        /// @todo delete all existing timers and pinba data in mysql
     }
 
     function testGetInfo()
