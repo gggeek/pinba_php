@@ -6,20 +6,11 @@ use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 class ClassTest extends TestCase
 {
     /**
-     * @beforeClass
-     */
-    public static function setEnvUp()
-    {
-        ini_set('pinba.enabled', 1);
-        ini_set('pinba.server', getenv('PINBA_SERVER') . ':' . getenv('PINBA_PORT'));
-    }
-
-    /**
      * @before
      */
-    public static function setTestUp()
+    public function setTestUp()
     {
-        /// @todo delete all existing timers and pinba data in mysql
+        /// @todo delete all existing timers
     }
 
     function testGetInfo()
