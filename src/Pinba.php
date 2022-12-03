@@ -41,11 +41,27 @@ class Pinba
      *
      * @param array $tags an array of tags and their values in the form of "tag" => "value". Cannot contain numeric indexes for obvious reasons.
      * @param array $data optional array with user data, not sent to the server.
-     * @return resource Always returns new timer resource.
+     * @return int Always returns new timer resource.
      */
     public static function timer_start($tags, $data=null)
     {
         $time = microtime(true);
+
+        if (!is_array($data)) {
+            trigger_error("pinba_timer_start() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
+            return null;
+        }
+        foreach($tags as $key => $val) {
+            if (! is_string($key)) {
+                trigger_error(' pinba_timer_start(): tags can only have string names (i.e. tags array cannot contain numeric indexes)', E_USER_WARNING);
+                return null;
+            }
+        }
+        if ($data !== null && !is_array($data)) {
+            trigger_error("pinba_timer_start() expects parameter 2 to be array, " . gettype($data) . " given", E_USER_WARNING);
+            return null;
+        }
+
         $timer = count(self::$timers);
         self::$timers[$timer] = array(
             "value" => $time,
@@ -59,11 +75,15 @@ class Pinba
     /**
      * Stops the timer.
      *
-     * @param resource $timer valid timer resource.
+     * @param int $timer valid timer resource.
      * @return bool Returns true on success and false on failure (if the timer has already been stopped).
      */
     public static function timer_stop($timer)
     {
+        if (!is_int($timer)) {
+            trigger_error("pinba_timer_stop() expects parameter 1 to be int, " . gettype($timer) . " given", E_USER_WARNING);
+            return false;
+        }
         $time = microtime(true);
         if (isset(self::$timers[$timer]))
         {
@@ -86,7 +106,7 @@ class Pinba
      *
      * Available since: 0.0.6
      *
-     * @param resource $timer valid timer resource.
+     * @param int $timer valid timer resource.
      * @return bool Returns true on success and false on failure.
      */
     public static function timer_delete($timer)
@@ -102,7 +122,7 @@ class Pinba
     /**
      * Merges $tags array with the timer tags replacing existing elements.
      *
-     * @param resource $timer - valid timer resource
+     * @param int $timer - valid timer resource
      * @param array $tags - an array of tags.
      * @return bool
      */
@@ -119,7 +139,7 @@ class Pinba
     /**
      * Replaces timer tags with the passed $tags array.
      *
-     * @param resource $timer - valid timer resource
+     * @param int $timer - valid timer resource
      * @param array $tags - an array of tags.
      * @return bool
      */
@@ -136,7 +156,7 @@ class Pinba
     /**
      * Merges $data array with the timer user data replacing existing elements.
      *
-     * @param resource $timer valid timer resource
+     * @param int $timer valid timer resource
      * @param array $data an array of user data.
      * @return bool Returns true on success and false on failure.
      */
@@ -154,7 +174,7 @@ class Pinba
      * Replaces timer user data with the passed $data array.
      * Use NULL value to reset user data in the timer.
      *
-     * @param resource $timer valid timer resource
+     * @param int $timer valid timer resource
      * @param array $data an array of user data.
      * @return bool Returns true on success and false on failure.
      */
@@ -171,7 +191,7 @@ class Pinba
     /**
      * Returns timer data.
      *
-     * @param resource $timer - valid timer resource.
+     * @param int $timer - valid timer resource.
      * @return array Output example:
      *    array(4) {
      *    ["value"]=>

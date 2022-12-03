@@ -40,16 +40,30 @@ class ClassTest extends TestCase
 
     function testTimer()
     {
-        $t = pinba::timer_start(array('tag1', 'tag2'), 'whatever');
+        $t = pinba::timer_start(array('tag1' => 'hello', 'tag2' => 10), array('whatever'));
+        $v = pinba::timer_get_info($t);
         sleep(1);
         $r = pinba::timer_stop($t);
+
         $this->assertSame(true, $r, 'timer_stop should return true for running timers');
+        $this->assertSame(true, $v['started'], 'Timer started should be true before stop');
+        $this->assertGreaterThan(0, $v['value'], 'Timer time should be bigger than zero after start');
+        $this->assertLessThan(0.1, $v['value'], 'Timer time should be less than 0.1 secs after start');
+
+        $v = pinba::timer_get_info($t);
+        $this->assertGreaterThan(1.0, $v['value'], 'Timer time should be bigger than sleep time');
+        $this->assertSame(array('tag1' => 'hello', 'tag2' => 10), $v['tags'], 'Timer tags should keep injected value');
+        $this->assertSame(array('whatever'), $v['data'], 'Timer data should keep injected value');
+        $this->assertSame(false, $v['started'], 'Timer started should be false after stop');
+
         $r = pinba::timer_stop($t);
         $this->assertSame(false, $r, 'timer_stop should return false for stopped timers');
+
+        sleep(1);
         $v = pinba::timer_get_info($t);
-        $this->assertGreaterThan(1.0, $v['value'], 'Timer time should be bigger than 1 sec');
-        $this->assertSame(array('tag1', 'tag2'), $v['tags'], 'Timer tags should keep injected value');
-        $this->assertSame('whatever', $v['data'], 'Timer data should keep injected value');
-        $this->assertSame(false, $v['started'], 'Timer started should be false after stop');
+        $this->assertLessThan(1.5, $v['value'], 'Timer time should not increase after stop');
+
+        $v2 = pinba::get_info();
+        $this->assertSame($v, $v2['timers'][0], 'get_info should return same timer as timer_get_info');
     }
 }
