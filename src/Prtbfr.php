@@ -44,6 +44,7 @@ class Prtbfr
     const TYPE_SFIXED64 = 16;
     const TYPE_SINT32   = 17;
     const TYPE_SINT64   = 18;
+    const TYPE_REQUEST  = 100;
     const TYPE_UNKNOWN  = -1;
 
     const LITTLE_ENDIAN = 1;
@@ -139,6 +140,7 @@ class Prtbfr
             case self::TYPE_ENUM:
                 $value = self::varint_encode($value);
                 break;
+            /// @todo support self::TYPE_REQUEST
             default:
                 throw new Exception("Unknown field type $type");
         }

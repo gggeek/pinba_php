@@ -33,17 +33,14 @@ class Pinba
         13 => array("timer_tag_name", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
         14 => array("timer_tag_value", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
         15 => array("dictionary", Prtbfr::TYPE_STRING, Prtbfr::ELEMENT_REPEATED), // bytes for pinba2
-        16 => array("status", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_OPTIONAL)
-        /// @todo new fields to add:
-        /*
+        16 => array("status", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_OPTIONAL),
         17 => array("memory_footprint", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_OPTIONAL),
-        18 => array("requests", Prtbfr::TYPE_, Prtbfr::ELEMENT_REPEATED), /// @todo support Request
+        18 => array("requests", Prtbfr::TYPE_REQUEST, Prtbfr::ELEMENT_REPEATED),
         19 => array("schema", Prtbfr::TYPE_STRING, Prtbfr::ELEMENT_OPTIONAL), // bytes for pinba2
         20 => array("tag_name", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
         21 => array("tag_value", Prtbfr::TYPE_UINT32, Prtbfr::ELEMENT_REPEATED),
         22 => array("timer_ru_utime", Prtbfr::TYPE_FLOAT, Prtbfr::ELEMENT_REPEATED),
         23 => array("timer_ru_stime", Prtbfr::TYPE_FLOAT, Prtbfr::ELEMENT_REPEATED),
-        */
     );
 
     /**
@@ -460,6 +457,16 @@ class Pinba
         {
             $struct["dictionary"][] = $tag;
         }
+
+        /// @todo implement the following fields
+
+        // $struct["memory_footprint"] = ...;
+        $struct["requests"] = array();
+        // $struct["schema"] = ...;
+        $struct["tag_name"] = array();
+        $struct["tag_value"] = array();
+        $struct["timer_ru_utime"] = array();
+        $struct["timer_ru_stime"] = array();
         return $struct;
     }
 
