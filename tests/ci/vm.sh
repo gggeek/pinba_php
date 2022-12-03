@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-## @todo fix:
-#   runtests
-#   resetdb
+# @todo runtests -o should generate html coverage, not xml
+# @todo reimplement resetdb
 # @todo simplify/verify cli options
 
 # Manage the whole set of containers and run tests without having to learn Docker
@@ -186,7 +185,7 @@ do
             INTERACTIVE='-i'
         ;;
         o)
-            COVERAGE_OPTION="-u ${OPTARG}"
+            COVERAGE_OPTION="--coverage-clover=coverage.clover"
         ;;
         t)
             TTY='-t'
@@ -274,7 +273,7 @@ case "${COMMAND}" in
     runtests)
         shift
         # q: do we need -ti ?
-        docker exec "${WEB_CONTAINER}" su "${WEB_USER}" -c '"$0" "$@"' -- ../teststack/bin/runtests.sh ${COVERAGE_OPTION} ${VERBOSITY} "$@"
+        docker exec "${WEB_CONTAINER}" su "${WEB_USER}" -c '"$0" "$@"' -- ./vendor/bin/phpunit ${COVERAGE_OPTION} ${VERBOSITY} tests
     ;;
 
     services)

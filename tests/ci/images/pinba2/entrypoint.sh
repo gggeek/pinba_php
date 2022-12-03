@@ -10,10 +10,12 @@ clean_up() {
     exit
 }
 
+echo "[$(date)] Handing over control to /usr/local/bin/entrypoint.sh..."
+
 trap clean_up TERM
 
 # cmd line from the original image...
-/local/mysql/bin/mysqld --basedir=/local/mysql --datadir=/local/mysql/data --plugin-dir=/local/mysql/lib/plugin --user=mysql --log-error=/local/mysql/var/mysqld.log --pid-file=/local/mysql/data/mysqld.pid --socket=/local/mysql/var/mysql.sock
+/usr/local/bin/docker-entrypoint.sh $@ &
 
 # wait until mysql is ready to accept connections over the network before saying bootstrap is finished
 which mysqladmin 2>/dev/null

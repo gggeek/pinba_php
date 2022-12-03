@@ -5,7 +5,14 @@ on: [push, pull_request]
 jobs:
     test:
         runs-on: ${{ matrix.operating-system }}
-#        env:
+        env:
+            PINBA_SERVER: localhost
+            PINBA_PORT: 30002
+            PINBA_DB_SERVER: localhost
+            PINBA_DB_PORT: 3306
+            PINBA_DB_USER: pinba
+            PINBA_DB_PASSWORD: pinba
+            PINBA_DB_DATABASE: pinba
         strategy:
             fail-fast: false
             matrix:
@@ -75,7 +82,12 @@ jobs:
 
             -   name: start pinba as container
                 run: |
-                    docker run -d "${{ matrix.pinba-container }}"
+                    if [ "${{ matrix.pinba-container }}" = anchorfree/pinba2 ]; then
+                        docker run -d "${{ matrix.pinba-container }}" -p 127.0.0.1:30002:3002/udp -p 127.0.0.1:33306:3306/tcp
+                    else
+                        docker run -d "${{ matrix.pinba-container }}" -p 127.0.0.1:30002:30002/udp -p 127.0.0.1:33306:3306/tcp
+                    fi
+
 
             # Avoid downloading composer deps on every workflow run. Is this useful for us? Caching the installation of
             # php/apache/privoxy/perl would be more useful...

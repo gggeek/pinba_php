@@ -61,6 +61,12 @@ echo "[$(date)] Running Composer..."
 #       it matches the current php version and a hash of composer.json...
 sudo "${USERNAME}" -c "cd ${TESTS_ROOT_DIR} && composer install"
 
+# @todo fix the config of pinboard to point to the correct pinba target.
+
+if [ -z "${PINBA_PORT}" -a "${PINBA_SERVER}" = pinba2 ]; then
+    PINBA_PORT=3002
+fi
+
 trap clean_up TERM
 
 echo "[$(date)] Starting FPM..."

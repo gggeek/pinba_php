@@ -12,41 +12,28 @@ services:
         hostname: php
         container_name: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}-php
         environment:
-            ## Configuration used by the boot/setup scripts
+            # Configuration used by the boot/setup scripts
             - CONTAINER_USER_UID=${CONTAINER_USER_UID:-1000}
             - CONTAINER_GROUP_GID=${CONTAINER_GROUP_GID:-1000}
-#            - http_proxy
-#            - https_proxy
+            # q: are these 2 used by composer?
+            - http_proxy
+            - https_proxy
             # Composer configuration
             - COMPOSER_AUTH
-#            - COMPOSER_IGNORE_PLATFORM_REQS
-#            - COMPOSER_MAX_PARALLEL_HTTP
             - COMPOSER_PREFER_LOWEST
-#            - COMPOSER_PROCESS_TIMEOUT
-            # Note that leaving this an empty default ha an effect on the name of the vendor folder and composer files which get set up
-#            - COMPOSE_PROJECT_NAME
-#            - TESTSTACK_SETUP_APP_ON_BOOT
-            # unluckily using PHP_VERSION=${TESTSTACK_PHP_VERSION:-${PHP_VERSION}} does not work
-#            - TESTSTACK_PHP_VERSION
-#            - TESTSTACK_NODE_VERSION
-            ## Database configuration
-#            - DB_TYPE=${DB_TYPE:-mysql}
-#            - DB_HOST
-#            - MYSQL_VERSION=${MYSQL_VERSION:-5.6}
-#            - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root_test}
-#            - DB_CHARSET
-#            - DB_EZ_USER=${DB_EZ_USER:-ezp}
-#            - DB_EZ_PASSWORD=${DB_EZ_PASSWORD:-ezp}
-#            - DB_EZ_DATABASE=${DB_EZ_DATABASE:-behattestdb}
-            # Configuration used by Symfony when running via phpunit (SYMFONY_ENV up to eZPlatform 2, APP_ENV for eZPlatform3)
-            #- APP_ENV=${APP_ENV:-behat}
-            #- SYMFONY_ENV=${SYMFONY_ENV:-behat}
+            # Tests configuration
+            - PINBA_SERVER=${PINBA_SERVER:-pinba}
+            - PINBA_PORT=${PINBA_PORT:-30002}
+            - PINBA_DB_SERVER=${PINBA_DB_SERVER:-pinba}
+            - PINBA_DB_PORT=3306
+            - PINBA_DB_USER=pinba
+            - PINBA_DB_PASSWORD=pinba
+            - PINBA_DB_DATABASE=pinba
             # As opposed to TRAVIS=true ;-)
             - DOCKER=true
         volumes:
             - ../../:/home/docker/build
-#            - ${TESTSTACK_APP_DIR:-../../}:/home/test/workspace
-#            - ${TESTSTACK_DATA_DIR:-./data}/.composer/:/home/test/.composer
+#            - ${TESTSTACK_COMPOSER_CACHE:-...}/:/home/docker/.composer
         ports:
             - "${TESTSTACK_WEB_PORT:-8080}:80"
 
@@ -57,49 +44,28 @@ services:
         hostname: pinba
         container_name: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}-pinba
         environment:
-#            - CONTAINER_USER_UID=${CONTAINER_USER_UID:-1000}
-#            - CONTAINER_USER_GID=${CONTAINER_USER_GID:-1000}
-#            - DB_TYPE=mysql
-#            # This is a courtesy - inside the container we should be able to retrieve the installed db version easily...
-#            - MYSQL_VERSION
-#            - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root_test}
-#            - MYSQL_USER=${DB_EZ_USER:-ezp}
-#            - MYSQL_PASSWORD=${DB_EZ_PASSWORD:-ezp}
-#            - MYSQL_DATABASE=${DB_EZ_DATABASE:-behattestdb}
-#            - EZ_PACKAGES
-#            # As opposed to TRAVIS=true ;-)
+            #- CONTAINER_USER_UID=${CONTAINER_USER_UID:-1000}
+            #- CONTAINER_USER_GID=${CONTAINER_USER_GID:-1000}
+            # As opposed to TRAVIS=true ;-)
             - DOCKER=true
-#        volumes:
-#            #- ./config/mysql/mysql_${TESTSTACK_DB_SIZE}.cnf:/etc/mysql/conf.d/mysql.cnf
-#            - ${TESTSTACK_DATA_DIR:-./data}/mysql/${COMPOSE_PROJECT_NAME:-pinbapolyfill}/:/var/lib/mysql
-#            - ${TESTSTACK_LOGS_DIR:-./logs}/mysql/${COMPOSE_PROJECT_NAME:-pinbapolyfill}/:/var/log/mysql
-#            - ../:/home/test/teststack
-        #tmpfs:
-        #    # used for mysql temp tables. Useful with ez5 db schema / queries (it creates lots of temp tables on disk)
-        #    - /tmpfs:mode=777
-        # uncomment this to be able to access the db from the host
         #ports:
         #    - "3307:3306"
-        # nb: this prevents the image to start on some ubuntu installs because of apparmor config...
-        #privileged: true
+        #    - "30003:30002"
 
     pinba2:
-        image: anchorfree/pinba2
+        image: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}/pinba2
+        build:
+            context: ./images/pinba2
         hostname: pinba2
         container_name: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}-pinba2
         environment:
-            #            - CONTAINER_USER_UID=${CONTAINER_USER_UID:-1000}
-            #            - CONTAINER_USER_GID=${CONTAINER_USER_GID:-1000}
-            #            - DB_TYPE=mysql
-            #            # This is a courtesy - inside the container we should be able to retrieve the installed db version easily...
-            #            - MYSQL_VERSION
-            #            - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root_test}
-            #            - MYSQL_USER=${DB_EZ_USER:-ezp}
-            #            - MYSQL_PASSWORD=${DB_EZ_PASSWORD:-ezp}
-            #            - MYSQL_DATABASE=${DB_EZ_DATABASE:-behattestdb}
-            #            - EZ_PACKAGES
-            #            # As opposed to TRAVIS=true ;-)
+            #- CONTAINER_USER_UID=${CONTAINER_USER_UID:-1000}
+            #- CONTAINER_USER_GID=${CONTAINER_USER_GID:-1000}
+            # As opposed to TRAVIS=true ;-)
             - DOCKER=true
+        #ports:
+        #    - "3308:3306"
+        #    - "30004:3002"
 
 #networks:
 #    default:

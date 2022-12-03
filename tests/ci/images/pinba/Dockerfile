@@ -1,6 +1,6 @@
 FROM tony2001/pinba
 
-# @todo test
+# @todo test: can't we just alter mysql config to allow network access with `root` account?
 
 RUN apt-get update && \
     #DEBIAN_FRONTEND=noninteractive apt-get -y upgrade && \
