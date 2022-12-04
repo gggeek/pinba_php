@@ -1,0 +1,4 @@
+CREATE USER 'pinba'@'%' IDENTIFIED BY 'pinba';
+GRANT ALL ON *.* TO 'pinba'@'%' WITH GRANT OPTION;
+DELETE FROM mysql.user WHERE user= '' ;
+FLUSH PRIVILEGES;

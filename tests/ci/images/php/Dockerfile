@@ -4,7 +4,7 @@ FROM ubuntu:${ubuntu_version}
 
 ARG php_version=default
 
-# Copy all the required shell scripts
+# Copy all the required shell scripts and config files
 COPY setup/*.sh /root/build/
 COPY config/* /root/config/
 
