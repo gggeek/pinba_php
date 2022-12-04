@@ -6,7 +6,7 @@ jobs:
     test:
         runs-on: ${{ matrix.operating-system }}
         env:
-            PINBA_SERVER: localhost
+            PINBA_SERVER: 127.0.0.1
             PINBA_PORT: 30002
             PINBA_DB_SERVER: 127.0.0.1
             PINBA_DB_PORT: 3306
@@ -88,7 +88,7 @@ jobs:
                     if [ "${{ matrix.pinba-container }}" = anchorfree/pinba2 ]; then
                         container=$(docker run -d -p 127.0.0.1:30002:3002/udp -p 127.0.0.1:3306:3306/tcp "${{ matrix.pinba-container }}")
                         # @todo instead of waiting, ping the server in a loop for a few seconds
-                        sleep 5
+                        sleep 10
                         echo "So far so good..."
                         docker exec -i "$container" mysql -h 127.0.0.1 -u root < ./tests/ci/images/pinba2/setup/mysql_init.sql
                     else
