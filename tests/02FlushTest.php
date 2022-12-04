@@ -28,6 +28,10 @@ class FlushTest extends TestCase
             getenv('PINBA_DB_PORT')
         );
 
+        if (self::$db->connect_errno) {
+            throw new PHPUnit_Framework_Exception("Can not connect to the Pinba DB");
+        }
+
         // Pinba 2 has fewer tables than pinba 1
         $r = self::$db->query("SELECT table_name FROM information_schema.tables  WHERE table_schema='pinba' AND table_name='request';")->fetch_row();
         if (count($r)) {
