@@ -1,5 +1,6 @@
 CREATE USER 'pinba'@'%' IDENTIFIED BY 'pinba';
 GRANT ALL ON *.* TO 'pinba'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
 
 USE pinba;
 
