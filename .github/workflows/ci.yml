@@ -91,6 +91,8 @@ jobs:
                         container=$(docker run -d -p 127.0.0.1:30002:30002/udp -p 127.0.0.1:3306:3306/tcp "${{ matrix.pinba-container }}")
                         docker exec "$container" apt-get update
                         docker exec "$container" apt-get -y install mysql-client
+                        # @todo instead of waiting, ping the server in a loop for a few seconds
+                        sleep 5
                         docker exec "$container" mysql -h 127.0.0.1 -u root < ./tests/ci/images/pinba/setup/mysql_init.sql
                     fi
 
