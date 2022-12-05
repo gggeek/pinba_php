@@ -29,6 +29,7 @@ class FlushTest extends TestCase
         );
 
         if (self::$db->connect_errno) {
+            /// @todo find an exception existing from phpunit 4 to 8
             throw new PHPUnit_Framework_Exception("Can not connect to the Pinba DB");
         }
 
@@ -76,9 +77,14 @@ class FlushTest extends TestCase
             }
 
             /// @todo add tags to the data sent, check that they are in the db
+
         }
 
-        $r = self::$db->query("SELECT * FROM report_by_script_name WHERE script_name='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
+        if (self::$pinba1) {
+            $r = self::$db->query("SELECT * FROM report_by_script_name WHERE script_name='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
+        } else {
+            $r = self::$db->query("SELECT * FROM report_by_script_name WHERE script='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
+        }
         $this->assertEquals(1, count($r), 'no aggregate data found in the db for a flush call');
     }
 }
