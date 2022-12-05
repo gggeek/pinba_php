@@ -19,7 +19,7 @@ class Pinba
     protected static $shutdown_registered = false;
     protected static $options = array();
 
-    public static $message_proto = array(
+    protected static $message_proto = array(
         1 => array("hostname", Prtbfr::TYPE_STRING), // bytes for pinba2
         2 => array("server_name", Prtbfr::TYPE_STRING), // bytes for pinba2
         3 => array("script_name", Prtbfr::TYPE_STRING), // bytes for pinba2
@@ -98,10 +98,6 @@ class Pinba
         {
             if (self::$timers[$timer]["started"])
             {
-                if (function_exists('getrusage'))
-                {
-                    /// @todo measure resource usage
-                }
                 self::$timers[$timer]["started"] = false;
                 self::$timers[$timer]["value"] = $time - self::$timers[$timer]["value"];
                 return true;
@@ -231,7 +227,7 @@ class Pinba
             {
                 $timer["value"] = $time - $timer["value"];
             }
-            /// @todo round the timer value?
+            /// @todo should we round the timer value?
             return $timer;
         }
         trigger_error("pinba_timer_get_info(): supplied resource is not a valid pinba timer resource", E_USER_WARNING);
@@ -262,80 +258,86 @@ class Pinba
      *
      * @return array Example:
      * array(9) {
-     *    ["mem_peak_usage"]=>
-     *    int(786432)
-     *    ["req_time"]=>
-     *    float(0.001529)
-     *    ["ru_utime"]=>
-     *    float(0)
-     *    ["ru_stime"]=>
-     *    float(0)
-     *    ["req_count"]=>
-     *    int(1)
-     *    ["doc_size"]=>
-     *    int(0)
-     *    ["server_name"]=>
-     *    string(7) "unknown"
-     *    ["script_name"]=>
-     *    string(1) "-"
-     *    ["hostname"]=>
-     *    string(3) "php"
-     *    ["timers"]=>
-     *    array(1) {
-     *        [0]=>
-     *        array(4) {
-     *            ["value"]=>
-     *            float(4.5E-5)
-     *            ["tags"]=>
-     *            array(1) {
-     *                ["foo"]=>
-     *                string(3) "bar"
-     *            }
-     *            ["started"]=>
-     *            bool(true)
-     *            ["data"]=>
-     *            NULL
-     *        }
-     *    }
-     *    ["tags"] =>
-     *    array(0) {}
+     *     ["mem_peak_usage"]=> int(786432)
+     *     ["req_time"]=> float(0.001529)
+     *     ["ru_utime"]=> float(0)
+     *     ["ru_stime"]=> float(0)
+     *     ["req_count"]=> int(1)
+     *     ["doc_size"]=> int(0)
+     *     ["server_name"]=> string(7) "unknown"
+     *     ["script_name"]=> string(1) "-"
+     *     ["hostname"]=> string(3) "php"
+     *     ["timers"]=> array(1) {
+     *         [0]=> array(4) {
+     *             ["value"]=> float(4.5E-5)
+     *             ["tags"]=> array(1) {
+     *                 ["foo"]=> string(3) "bar"
+     *             }
+     *             ["started"]=> bool(true)
+     *             ["data"]=> NULL
+     *         }
+     *     }
+     *     ["tags"] => array(0) {
+     *     }
      * }
      */
     public static function get_info()
     {
+        if (self::$hostname === null)
+        {
+            if (php_sapi_name() == 'cli')
+            {
+                self::$hostname = 'php';
+            }
+            else
+            {
+                self::$hostname = gethostname();
+            }
+        }
+        if (self::$script_name === null && isset($_SERVER['SCRIPT_NAME']))
+        {
+            self::$script_name = $_SERVER['SCRIPT_NAME'];
+        }
+        if (self::$server_name === null && isset($_SERVER['SERVER_NAME']))
+        {
+            self::$server_name = $_SERVER['SERVER_NAME'];
+        }
+
+        /// @todo can we push timing measurement further close to end of execution?
+
         $time = microtime(true);
+        $timers = array();
+        foreach(self::$timers as $i => $t)
+        {
+            $timers[] = self::_timer_get_info($i, $time);
+        }
+
+        $ruUtime = 0;
+        $ruStime = 0;
         if (function_exists('getrusage')) {
             $rUsage = getrusage();
-        } else {
-            $rUsage = array();
+            if (isset($rUsage['ru_utime.tv_usec'])) {
+                $ruUtime = $rUsage['ru_utime.tv_usec'] / 1000000;
+            }
+            if (isset($rUsage['ru_utime.tv_usec'])) {
+                $ruStime = $rUsage['ru_stime.tv_usec'] / 1000000;
+            }
         }
 
         $results = array(
             'mem_peak_usage' => memory_get_peak_usage(true),
             'req_time' => $time - self::$start,
-            'ru_utime' => 0,
-            'ru_stime' => 0,
+            'ru_utime' => $ruUtime,
+            'ru_stime' => $ruStime,
             'req_count' => 0, /// @todo should we default to 1 ?
             'doc_size' => 0,
             'schema' => '',
             'server_name' => (self::$server_name != null ? self::$server_name : 'unknown'),
             'script_name' => (self::$script_name != null ? self::$script_name : 'unknown'),
             'hostname' => (self::$hostname != null ? self::$hostname : 'unknown'),
-            'timers' => array(),
+            'timers' => $timers,
             'tags' => array()
         );
-
-        foreach(self::$timers as $i => $t)
-        {
-            $results['timers'][] = self::_timer_get_info($i, $time);
-        }
-
-        if (isset($rUsage['ru_utime.tv_usec'])) {
-            $results['ru_utime'] = $rUsage['ru_utime.tv_usec'] / 1000000;
-        }
-        if (isset($rUsage['ru_utime.tv_usec'])) {
-            $results['ru_stime'] = $rUsage['ru_stime.tv_usec'] / 1000000;
-        }
 
         return $results;
     }
@@ -375,20 +377,21 @@ class Pinba
     {
         if (self::ini_get('pinba.enabled'))
         {
-            $struct = static::get_packet_info($script_name);
-            $message = Prtbfr::encode($struct, self::$message_proto);
-
-            $server = ini_get('pinba.server');
+            $server = self::ini_get('pinba.server');
             $port = 30002;
             if (count($parts = explode(':', $server)) > 1)
             {
                 (int)$port = $parts[1];
                 $server = $parts[0];
             }
-            /// @todo log a specific warning in case of failures to open the udp socket?
+
+            /// @todo should we log a specific warning in case of failures to open the udp socket? or be completely silent?
             $fp = fsockopen("udp://$server", $port, $errno, $errstr);
             if ($fp)
             {
+                $struct = static::get_packet_info($script_name);
+                $message = Prtbfr::encode($struct, self::$message_proto);
+
                 fwrite($fp, $message, strlen($message));
                 fclose($fp);
             }
@@ -396,8 +399,8 @@ class Pinba
     }
 
     /**
-    * Builds the php array structure to be sent to the pinba server.
-    */
+     * Builds the php array structure to be sent to the pinba server.
+     */
     protected static function get_packet_info($script_name=null)
     {
         $struct = static::get_info();
@@ -409,10 +412,10 @@ class Pinba
             $struct["script_name"] = $script_name;
         }
         foreach(array(
-                "mem_peak_usage" => "memory_peak",
-                "req_time" => "request_time",
-                "req_count" => "request_count",
-                "doc_size" => "document_size") as $old => $new)
+            "mem_peak_usage" => "memory_peak",
+            "req_time" => "request_time",
+            "req_count" => "request_count",
+            "doc_size" => "document_size") as $old => $new)
         {
             $struct[$new] = $struct[$old];
         }
@@ -499,25 +502,6 @@ class Pinba
                 $time = microtime(true);
             }
             self::$start = $time;
-        }
-        if (self::$hostname == null)
-        {
-            if (php_sapi_name() == 'cli')
-            {
-                self::$hostname = 'php';
-            }
-            else
-            {
-                self::$hostname = gethostname();
-            }
-        }
-        if (self::$script_name == null && isset($_SERVER['SCRIPT_NAME']))
-        {
-            self::$script_name = $_SERVER['SCRIPT_NAME'];
-        }
-        if (self::$server_name == null && isset($_SERVER['SERVER_NAME']))
-        {
-            self::$server_name = $_SERVER['SERVER_NAME'];
         }
         if (!self::$shutdown_registered)
         {
