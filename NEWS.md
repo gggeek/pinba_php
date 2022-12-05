@@ -1,4 +1,4 @@
-vXXX - unreleased
+v0.2 - 5/12/2022
 
 * added constants: `PINBA_FLUSH_ONLY_STOPPED_TIMERS`, `PINBA_FLUSH_RESET_DATA`, `PINBA_ONLY_RUNNING_TIMERS`, `PINBA_AUTO_FLUSH`,
   `PINBA_ONLY_STOPPED_TIMERS`
@@ -9,8 +9,7 @@ vXXX - unreleased
 * added non-API methods: `Pinba::ini_set` and `Pinba::ini_get`
 * made sure CI tests can successfully connect to the pinba servers and query them
 
-
-v0.1 - 2022/3/12
+v0.1 - 3/12/2022
 
 Changes compared to the previous state (2013 commits): this thing now works well enough to send data to a Pinba server
 

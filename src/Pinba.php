@@ -563,7 +563,6 @@ class Pinba
 
         // massage info into correct format for pinba server
 
-        $struct["status"] = 0; /// @todo
         $struct["hostname"] = self::$hostname;
         if ($script_name != null)
         {
@@ -653,6 +652,7 @@ class Pinba
 
         /// @todo implement the following missing fields
 
+        $struct["status"] = 0; /// @todo
         // $struct["memory_footprint"] = ...;
         $struct["requests"] = array(); /// @todo
 
