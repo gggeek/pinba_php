@@ -1,3 +1,15 @@
+vXXX - unreleased
+
+* added constants: `PINBA_FLUSH_ONLY_STOPPED_TIMERS`, `PINBA_FLUSH_RESET_DATA`, `PINBA_ONLY_RUNNING_TIMERS`, `PINBA_AUTO_FLUSH`,
+  `PINBA_ONLY_STOPPED_TIMERS`
+* added methods: `pinba_timer_add`, `pinba_timers_get`, `pinba_schema_set`, `pinba_server_name_set`, `pinba_request_time_set`
+  `pinba_tag_set`, `pinba_tag_get`, `pinba_tag_delete`, `pinba_tags_get`
+* fixed return value for methods: `pinba_script_name_set`, `pinba_hostname_set`
+* fixed: `pinba_flush` now stops all timers by default. It also supports 2nd argument `$flags` to change its behaviour
+* added non-API methods: `Pinba::ini_set` and `Pinba::ini_get`
+* made sure CI tests can successfully connect to the pinba servers and query them
+
+
 v0.1 - 2022/3/12
 
 Changes compared to the previous state (2013 commits): this thing now works well enough to send data to a Pinba server
