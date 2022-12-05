@@ -11,13 +11,22 @@ namespace PinbaPhp\Polyfill;
 
 class Pinba
 {
+    /// @todo check if this is actually the same in the extension
+    const PINBA_FLUSH_ONLY_STOPPED_TIMERS = 1;
+    const PINBA_FLUSH_RESET_DATA = 2;
+    const PINBA_ONLY_RUNNING_TIMERS = 4;
+    const PINBA_AUTO_FLUSH = 8;
+    const PINBA_ONLY_STOPPED_TIMERS = 1;
+
     protected static $timers = array();
     protected static $script_name = null;
     protected static $server_name = null;
     protected static $hostname = null;
-    protected static $start = null;
+    protected static $schema = null;
+    protected static $request_time = null;
     protected static $shutdown_registered = false;
     protected static $options = array();
+    protected static $tags = array();
 
     protected static $message_proto = array(
         1 => array("hostname", Prtbfr::TYPE_STRING), // bytes for pinba2
@@ -51,12 +60,14 @@ class Pinba
      * @param array $tags an array of tags and their values in the form of "tag" => "value". Cannot contain numeric indexes for obvious reasons.
      * @param array $data optional array with user data, not sent to the server.
      * @return int Always returns new timer resource.
+     *
+     * @todo support $hit_count
      */
-    public static function timer_start($tags, $data=null)
+    public static function timer_start($tags, $data = null, $hit_count = 1)
     {
         $time = microtime(true);
 
-        if (!is_array($data)) {
+        if (!is_array($tags)) {
             trigger_error("pinba_timer_start() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
             return null;
         }
@@ -107,9 +118,42 @@ class Pinba
     }
 
     /**
-     * Deletes the timer.
+     * Creates new timer. This timer is already stopped and has specified time value.
      *
-     * Available since: 0.0.6
+     * @param array $tags an array of tags and their values in the form of "tag" => "value". Cannot contain numeric indexes for obvious reasons.
+     * @param int $value timer value for new timer.
+     * @param array $data optional array with user data, not sent to the server.
+     * @return int Always returns new timer resource.
+     */
+    public static function timer_add($tags, $value, $data = null)
+    {
+        if (!is_array($tags)) {
+            trigger_error("pinba_timer_add() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
+            return null;
+        }
+        foreach($tags as $key => $val) {
+            if (! is_string($key)) {
+                trigger_error(' pinba_timer_add(): tags can only have string names (i.e. tags array cannot contain numeric indexes)', E_USER_WARNING);
+                return null;
+            }
+        }
+        if ($data !== null && !is_array($data)) {
+            trigger_error("pinba_timer_add() expects parameter 3 to be array, " . gettype($data) . " given", E_USER_WARNING);
+            return null;
+        }
+
+        $timer = count(self::$timers);
+        self::$timers[$timer] = array(
+            "value" => $value,
+            "tags" => $tags,
+            "started" => false,
+            "data" => $data
+        );
+        return $timer;
+    }
+
+    /**
+     * Deletes the timer.
      *
      * @param int $timer valid timer resource.
      * @return bool Returns true on success and false on failure.
@@ -133,6 +177,8 @@ class Pinba
      */
     public static function timer_tags_merge($timer, $tags)
     {
+        /// @todo should we check for type of $tags?
+
         if (isset(self::$timers[$timer]))
         {
             self::$timers[$timer]["tags"] = array_merge(self::$timers[$timer]["tags"], $tags);
@@ -150,6 +196,8 @@ class Pinba
      */
     public static function timer_tags_replace($timer, $tags)
     {
+        /// @todo should we check for type of $tags?
+
         if (isset(self::$timers[$timer]))
         {
             self::$timers[$timer]["tags"] = $tags;
@@ -167,6 +215,8 @@ class Pinba
      */
     public static function timer_data_merge($timer, $data)
     {
+        /// @todo should we check for type of $data?
+
         if (isset(self::$timers[$timer]))
         {
             self::$timers[$timer]["data"] = array_merge(self::$timers[$timer]["data"], $data);
@@ -185,6 +235,8 @@ class Pinba
      */
     public static function timer_data_replace($timer, $data)
     {
+        /// @todo should we check for type of $data?
+
         if (isset(self::$timers[$timer]))
         {
             self::$timers[$timer]["data"] = $data;
@@ -198,19 +250,14 @@ class Pinba
      *
      * @param int $timer - valid timer resource.
      * @return array|false Output example:
-     *    array(4) {
-     *    ["value"]=>
-     *    float(0.0213)
-     *    ["tags"]=>
-     *    array(1) {
-     *    ["foo"]=>
-     *    string(3) "bar"
-     *    }
-     *    ["started"]=>
-     *    bool(true)
-     *    ["data"]=>
-     *    NULL
-     *    }
+     * array(4) {
+     *     ["value"]=> float(0.0213)
+     *     ["tags"]=> array(1) {
+     *         ["foo"]=> string(3) "bar"
+     *     }
+     *     ["started"]=> bool(true)
+     *     ["data"]=> NULL
+     * }
      */
     public static function timer_get_info($timer)
     {
@@ -230,6 +277,7 @@ class Pinba
             /// @todo should we round the timer value?
             return $timer;
         }
+
         trigger_error("pinba_timer_get_info(): supplied resource is not a valid pinba timer resource", E_USER_WARNING);
         return false;
     }
@@ -251,6 +299,24 @@ class Pinba
             }
         }
         return true;
+    }
+
+    /**
+     * Get all timers info.
+     *
+     * @param int $flag
+     * @return array
+     */
+    public static function timers_get($flag = self::PINBA_ONLY_STOPPED_TIMERS)
+    {
+        $out = array();
+        $time = microtime(true);
+        foreach(self::$timers as $key => $timer) {
+            if (!($flag & self::PINBA_ONLY_STOPPED_TIMERS) || $timer['started'] === false) {
+                $out[] = self::_timer_get_info($key, $time);
+            }
+        }
+        return $out;
     }
 
     /**
@@ -324,22 +390,32 @@ class Pinba
             }
         }
 
-        $results = array(
+        return array(
             'mem_peak_usage' => memory_get_peak_usage(true),
-            'req_time' => $time - self::$start,
+            'req_time' => $time - self::$request_time,
             'ru_utime' => $ruUtime,
             'ru_stime' => $ruStime,
             'req_count' => 0, /// @todo should we default to 1 ?
             'doc_size' => 0,
-            'schema' => '',
+            'schema' => self::$schema,
             'server_name' => (self::$server_name != null ? self::$server_name : 'unknown'),
             'script_name' => (self::$script_name != null ? self::$script_name : 'unknown'),
             'hostname' => (self::$hostname != null ? self::$hostname : 'unknown'),
             'timers' => $timers,
-            'tags' => array()
+            'tags' => self::$tags
         );
+    }
 
-        return $results;
+    /**
+     * Set request schema (HTTP/HTTPS/whatever).
+     *
+     * @param string $schema
+     * @return bool
+     */
+    public static function schema_set($schema)
+    {
+        self::$schema = $schema;
+        return true;
     }
 
     /**
@@ -352,6 +428,74 @@ class Pinba
     public static function script_name_set($script_name)
     {
         self::$script_name = $script_name;
+        return true;
+    }
+
+    /**
+     * Set custom server name instead of $_SERVER['SERVER_NAME'] used by default.
+     *
+     * @param string $server_name
+     * @return bool
+     */
+    public static function server_name_set($server_name)
+    {
+        self::$server_name = $server_name;
+        return true;
+    }
+
+    /**
+     * Set custom Set custom request time.
+     *
+     * @param float $request_time
+     * @return bool
+     */
+    public static function request_time_set($request_time)
+    {
+        self::$request_time = $request_time;
+        return true;
+    }
+
+    /**
+     * @param string $tag
+     * @param string $value
+     * @return bool
+     */
+    public static function tag_set($tag, $value)
+    {
+        self::$tags[$tag] = $value;
+        return true;
+    }
+
+    /**
+     * @param string $tag
+     * @return string
+     */
+    public static function tag_get($tag)
+    {
+        /// @todo raise a warning if tag does not exists?
+
+        return isset(self::$tags[$tag]) ? self::$tags[$tag] : null;
+    }
+
+    /**
+     * @param string $tag
+     * @return bool
+     */
+    public static function tag_delete($tag)
+    {
+        if (array_key_exists($tag, self::$tags))
+        {
+            unset(self::$tags[$tag]);
+        }
+        return false;
+    }
+
+    /**
+     * @return array
+     */
+    public static function tags_get()
+    {
+        return self::$tags;
     }
 
     /**
@@ -363,6 +507,7 @@ class Pinba
     public static function hostname_set($hostname)
     {
         self::$hostname = $hostname;
+        return true;
     }
 
     /**
@@ -373,7 +518,7 @@ class Pinba
      *
      * @todo add IPv6 support (see http://pinba.org/wiki/Manual:PHP_extension)
      */
-    public static function flush($script_name=null)
+    public static function flush($script_name = null, $flags = self::PINBA_FLUSH_ONLY_STOPPED_TIMERS)
     {
         if (self::ini_get('pinba.enabled'))
         {
@@ -477,15 +622,20 @@ class Pinba
             $struct["dictionary"][] = $tag;
         }
 
-        /// @todo implement the following fields
+        /// @todo implement the following missing fields
 
         // $struct["memory_footprint"] = ...;
-        $struct["requests"] = array();
-        // $struct["schema"] = ...;
+        $struct["requests"] = array(); /// @todo
+
         $struct["tag_name"] = array();
         $struct["tag_value"] = array();
-        $struct["timer_ru_utime"] = array();
-        $struct["timer_ru_stime"] = array();
+        foreach($struct["tags"] as $name => $value) {
+            $struct["tag_name"][] = $name;
+            $struct["tag_value"][] = $value;
+        }
+
+        $struct["timer_ru_utime"] = array(); /// @todo
+        $struct["timer_ru_stime"] = array(); /// @todo
 
         return $struct;
     }
@@ -495,13 +645,13 @@ class Pinba
      */
     public static function init($time=null)
     {
-        if (self::$start == null || $time != null)
+        if (self::$request_time == null || $time != null)
         {
             if ($time == null)
             {
                 $time = microtime(true);
             }
-            self::$start = $time;
+            self::$request_time = $time;
         }
         if (!self::$shutdown_registered)
         {
