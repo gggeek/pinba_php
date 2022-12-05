@@ -319,8 +319,11 @@ if (!function_exists('pinba_flush')) {
      * You can use optional argument script_name to set custom script name.
      *
      * @param string $script_name
+     * @param int $flags Possible values (it's a bitmask, so you can add the constants):
+     *                   PINBA_FLUSH_ONLY_STOPPED_TIMERS - flush only stopped timers (by default all existing timers are stopped and flushed)
+     *                   PINBA_FLUSH_RESET_DATA - reset common request
      */
-    function pinba_flush($script_name = null, $flags = pinba::PINBA_FLUSH_ONLY_STOPPED_TIMERS)
+    function pinba_flush($script_name = null, $flags = 0)
     {
         pinba::flush($script_name, $flags);
     }

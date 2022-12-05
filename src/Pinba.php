@@ -22,7 +22,7 @@ class Pinba
     protected static $script_name = null;
     protected static $server_name = null;
     protected static $hostname = null;
-    protected static $schema = null;
+    protected static $schema = '';
     protected static $request_time = null;
     protected static $shutdown_registered = false;
     protected static $options = array();
@@ -395,7 +395,7 @@ class Pinba
             'req_time' => $time - self::$request_time,
             'ru_utime' => $ruUtime,
             'ru_stime' => $ruStime,
-            'req_count' => 0, /// @todo should we default to 1 ?
+            'req_count' => 1, /// @todo should we default to 0 ?
             'doc_size' => 0,
             'schema' => self::$schema,
             'server_name' => (self::$server_name != null ? self::$server_name : 'unknown'),
@@ -515,10 +515,13 @@ class Pinba
      * You can use optional argument script_name to set custom script name.
      *
      * @param string $script_name
+     * @param int $flags Possible values (it's a bitmask, so you can add the constants):
+     *                   PINBA_FLUSH_ONLY_STOPPED_TIMERS - flush only stopped timers (by default all existing timers are stopped and flushed)
+     *                   PINBA_FLUSH_RESET_DATA - reset common request
      *
      * @todo add IPv6 support (see http://pinba.org/wiki/Manual:PHP_extension)
      */
-    public static function flush($script_name = null, $flags = self::PINBA_FLUSH_ONLY_STOPPED_TIMERS)
+    public static function flush($script_name = null, $flags = 0)
     {
         if (self::ini_get('pinba.enabled'))
         {
@@ -534,22 +537,32 @@ class Pinba
             $fp = fsockopen("udp://$server", $port, $errno, $errstr);
             if ($fp)
             {
-                $struct = static::get_packet_info($script_name);
+                $struct = static::get_packet_info($script_name, $flags);
                 $message = Prtbfr::encode($struct, self::$message_proto);
 
                 fwrite($fp, $message, strlen($message));
                 fclose($fp);
+
+                if ($flags & self::PINBA_FLUSH_RESET_DATA) {
+                    self::$timers = array();
+                    self::$tags = array();
+                    self::$request_time = microtime(true);
+                    /// @todo the C code resets as well doc_size, mem_peak_usage, req_count, ru_*,
+                }
             }
         }
     }
 
     /**
      * Builds the php array structure to be sent to the pinba server.
+     * NB: depending on the value of $flags, it will stop all running timers
      */
-    protected static function get_packet_info($script_name=null)
+    protected static function get_packet_info($script_name = null, $flags = 0)
     {
         $struct = static::get_info();
+
         // massage info into correct format for pinba server
+
         $struct["status"] = 0; /// @todo
         $struct["hostname"] = self::$hostname;
         if ($script_name != null)
@@ -564,10 +577,26 @@ class Pinba
         {
             $struct[$new] = $struct[$old];
         }
+        if (!($flags & self::PINBA_FLUSH_ONLY_STOPPED_TIMERS)) {
+            $time = microtime(true);
+        }
         // merge timers by tags
         $tags = array();
         foreach($struct["timers"] as $id => $timer)
         {
+            if ($flags & self::PINBA_FLUSH_ONLY_STOPPED_TIMERS) {
+                if ($timer['started']) {
+                    unset($struct["timers"][$id]);
+                    continue;
+                }
+            } else {
+                // stop all running timers
+                if ($timer['started']) {
+                    self::$timers[$id]["started"] = false;
+                    self::$timers[$id]["value"] = $time - self::$timers[$timer]["value"];
+                }
+            }
+
             $tag = md5(var_export($timer["tags"], true));
             if (isset($tags[$tag]))
             {
