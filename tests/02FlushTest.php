@@ -17,8 +17,8 @@ class FlushTest extends TestCase
      */
     public static function setEnvUp()
     {
-        //ini_set('pinba.enabled', 1);
-        ini_set('pinba.server', getenv('PINBA_SERVER') . ':' . getenv('PINBA_PORT'));
+        pinba::ini_set('pinba.enabled', 1);
+        pinba::ini_set('pinba.server', getenv('PINBA_SERVER') . ':' . getenv('PINBA_PORT'));
 
         self::$db = new mysqli(
             getenv('PINBA_DB_SERVER'),
@@ -38,6 +38,15 @@ class FlushTest extends TestCase
         if (count($r)) {
             self::$pinba1 = true;
         }
+    }
+
+    /**
+     * @afterClass
+     */
+    public static function shutEnvDown()
+    {
+        // avoid flushing on end of phpunit
+        pinba::ini_set('pinba.enabled', 0);
     }
 
     /**

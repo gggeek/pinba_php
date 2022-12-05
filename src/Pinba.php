@@ -17,6 +17,7 @@ class Pinba
     protected static $hostname = null;
     protected static $start = null;
     protected static $shutdown_registered = false;
+    protected static $options = array();
 
     public static $message_proto = array(
         1 => array("hostname", Prtbfr::TYPE_STRING), // bytes for pinba2
@@ -372,7 +373,7 @@ class Pinba
      */
     public static function flush($script_name=null)
     {
-        if (ini_get('pinba.enabled'))
+        if (self::ini_get('pinba.enabled'))
         {
             $struct = static::get_packet_info($script_name);
             $message = Prtbfr::encode($struct, self::$message_proto);
@@ -523,5 +524,47 @@ class Pinba
             self::$shutdown_registered = true;
             register_shutdown_function('\PinbaPhp\Polyfill\Pinba::flush');
         }
+    }
+
+    /**
+     * Sadly it is not possible to set in php code values for 'pinba.enabled', at least when the pinba extension is
+     * not on board. When using `php -d pinba.enabled=1` or values in php.ini, `ini_get` will also not work, whereas
+     * `get_cfg_var` will.
+     * We try to make life easy for the users of the polyfill as well as for the test code by allowing usage of values
+     * set both in php.ini and in php code
+     * @param string $option
+     * @return string|false
+     * @see Pinba::ini_set()
+     */
+    public static function ini_get($option)
+    {
+        if (array_key_exists($option, self::$options)) {
+            return self::$options[$option];
+        }
+
+        $val = ini_get($option);
+        if ($val === false) {
+            $val = get_cfg_var($option);
+        }
+
+        return $val;
+    }
+
+    /**
+     * Allow to set config values specific to pinba, without messing with php.ini stuff.
+     * @param string $option
+     * @param string|int|float|bool|null $value
+     * @return string|null
+     */
+    public static function ini_set($option, $value)
+    {
+        if (array_key_exists($option, self::$options)) {
+            $oldValue = self::$options[$option];
+        } else {
+            // we do not return false, as that would indicate a failure ;-)
+            $oldValue = null;
+        }
+        self::$options[$option] = (string)$value;
+        return $oldValue;
     }
 }
