@@ -34,8 +34,8 @@ class FlushTest extends TestCase
         }
 
         // Pinba 2 does not have raw data tables
-        $r = self::$db->query("SELECT table_name FROM information_schema.tables  WHERE table_schema='pinba' AND table_name='request';")->fetch_row();
-        if (count($r)) {
+        $r = self::$db->query("SELECT table_name FROM information_schema.tables WHERE table_schema='pinba' AND table_name='request';")->fetch_row();
+        if (is_array($r) && count($r)) {
             self::$pinba1 = true;
         }
         // this is required to "start" the reporting table
