@@ -30,7 +30,8 @@ unless you have added explicit calls to the pinba api in your php code.
 
 See the API described at https://github.com/tony2001/pinba_engine/wiki/PHP-extension
 
-For viewing the gathered metrics, check out https://github.com/intaro/pinboard or https://github.com/ClickHouse-Ninja/Proton
+For viewing the gathered metrics, check out https://github.com/intaro/pinboard, https://github.com/pinba-server/pinba-server
+or https://github.com/ClickHouse-Ninja/Proton
 
 ## Compatibility
 
