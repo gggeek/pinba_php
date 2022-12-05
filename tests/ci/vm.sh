@@ -56,7 +56,7 @@ Advanced Options:
     -o PROVIDER       generate and upload code coverage data - when running 'runtests'. Providers: codecov, scrutinizer
     -t                allocate a pseudo-TTY - when running 'exec'
 
-Env vars: TESTSTACK_UBUNTU_VERSION (focal), TESTSTACK_PHP_VERSION (default), TESTSTACK_WEB_PORT (80)
+Env vars: TESTSTACK_UBUNTU_VERSION (focal), TESTSTACK_PHP_VERSION (default)
 "
 }
 
