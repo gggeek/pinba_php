@@ -37,9 +37,9 @@ class FlushTest extends TestCase
         $r = self::$db->query("SELECT table_name FROM information_schema.tables  WHERE table_schema='pinba' AND table_name='request';")->fetch_row();
         if (count($r)) {
             self::$pinba1 = true;
-            // this is required to start the reporting
-            self::$db->query("SELECT * FROM report_by_script_name;")->fetch_all(MYSQLI_ASSOC);
         }
+        // this is required to "start" the reporting table
+        self::$db->query("SELECT * FROM report_by_script_name;")->fetch_all(MYSQLI_ASSOC);
     }
 
     /**
