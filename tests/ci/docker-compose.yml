@@ -34,8 +34,9 @@ services:
         volumes:
             - ../../:/home/docker/build
 #            - ${TESTSTACK_COMPOSER_CACHE:-...}/:/home/docker/.composer
-#        ports:
-#            - "${TESTSTACK_WEB_PORT:-8080}:80"
+        ports:
+            # used to expose adminer and other courtesy tools for the tester
+            - "${TESTSTACK_WEB_PORT:-8080}:80"
 
     pinba:
         image: ${COMPOSE_PROJECT_NAME:-pinbapolyfill}/pinba
