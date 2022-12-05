@@ -518,8 +518,9 @@ class Pinba
      * @param int $flags Possible values (it's a bitmask, so you can add the constants):
      *                   PINBA_FLUSH_ONLY_STOPPED_TIMERS - flush only stopped timers (by default all existing timers are stopped and flushed)
      *                   PINBA_FLUSH_RESET_DATA - reset common request
+     * @return bool false if extension is disabled, or if there are network issues
      *
-     * @todo add IPv6 support (see http://pinba.org/wiki/Manual:PHP_extension)
+     * @todo add IPv6 support for `pinba.server` (see http://pinba.org/wiki/Manual:PHP_extension)
      */
     public static function flush($script_name = null, $flags = 0)
     {
@@ -533,14 +534,17 @@ class Pinba
                 $server = $parts[0];
             }
 
-            /// @todo should we log a specific warning in case of failures to open the udp socket? or be completely silent?
+            /// @todo should we log a more specific warning in case of failures to open the udp socket? f.e. the pinba
+            ///       extension on invalid hostname triggers:
+            ///       PHP Warning:  Unknown: failed to resolve Pinba server hostname 'xxx': Name or service not known in Unknown on line 0
             $fp = fsockopen("udp://$server", $port, $errno, $errstr);
             if ($fp)
             {
                 $struct = static::get_packet_info($script_name, $flags);
                 $message = Prtbfr::encode($struct, self::$message_proto);
 
-                fwrite($fp, $message, strlen($message));
+                $msgLen = strlen($message);
+                $len = fwrite($fp, $message, $msgLen);
                 fclose($fp);
 
                 if ($flags & self::PINBA_FLUSH_RESET_DATA) {
@@ -549,8 +553,12 @@ class Pinba
                     self::$request_time = microtime(true);
                     /// @todo the C code resets as well doc_size, mem_peak_usage, req_count, ru_*,
                 }
+
+                return $msgLen == $len;
             }
         }
+
+        return false;
     }
 
     /**
