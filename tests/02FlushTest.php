@@ -81,8 +81,7 @@ class FlushTest extends TestCase
             $this->assertEquals($v['doc_size'], (int)$r['doc_size'], 'doc_size data was not sent correctly to the db');
             $this->assertEquals(round($v['mem_peak_usage']/1024), (int)$r['mem_peak_usage'], 'mem_peak_usage data was not sent correctly to the db');
             $this->assertEquals(count($v['timers']), (int)$r['timers_cnt'], 'timers data was not sent correctly to the db');
-            /// @todo check when we get '<empty>' vs ''
-            $this->assertEquals('', $r['schema'], 'schema data was not sent correctly to the db');
+            $this->assertContains($r['schema'], array('', '<empty>'), 'schema data was not sent correctly to the db');
             if (!count($v['timers'])) {
                 $this->assertEquals(0, (int)$r['tags_cnt'], 'tags data was not sent correctly to the db');
                 $this->assertEquals('', $r['tags'], 'tags data was not sent correctly to the db');
