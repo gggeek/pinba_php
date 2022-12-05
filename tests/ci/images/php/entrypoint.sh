@@ -48,7 +48,8 @@ sed -e "s?^export APACHE_RUN_GROUP=.*?export APACHE_RUN_GROUP=${USERNAME}?g" --i
 
 echo "[$(date)] Fixing FPM configuration..."
 
-FPMCONF="/etc/php/$(php -r 'echo implode(".",array_slice(explode(".",PHP_VERSION),0,2));' 2>/dev/null)/fpm/pool.d/www.conf"
+PHPVER=$(php -r 'echo implode(".",array_slice(explode(".",PHP_VERSION),0,2));' 2>/dev/null)
+FPMCONF="/etc/php/${PHPVER}/fpm/pool.d/www.conf"
 sed -e "s?^user =.*?user = ${USERNAME}?g" --in-place "${FPMCONF}"
 sed -e "s?^group =.*?group = ${USERNAME}?g" --in-place "${FPMCONF}"
 sed -e "s?^listen.owner =.*?listen.owner = ${USERNAME}?g" --in-place "${FPMCONF}"
@@ -65,6 +66,18 @@ sudo "${USERNAME}" -c "cd ${TESTS_ROOT_DIR} && composer install"
 
 if [ -z "${PINBA_PORT}" -a "${PINBA_SERVER}" = pinba2 ]; then
     PINBA_PORT=3002
+fi
+
+echo "[$(date)] Setting up pinba_php configuration..."
+if [ -f "/etc/php/${PHPVER}/cli/conf.d/20-pinba.ini" ]; then
+    echo "extension=pinba.so" > "/etc/php/${PHPVER}/cli/conf.d/20-pinba.ini"
+    echo "pinba.enabled=1" >> "/etc/php/${PHPVER}/cli/conf.d/20-pinba.ini"
+    echo "pinba.server=${PINBA_SERVER}:${PINBA_PORT}" >> "/etc/php/${PHPVER}/cli/conf.d/20-pinba.ini"
+fi
+if [ -f "/etc/php/${PHPVER}/fpm/conf.d/20-pinba.ini" ]; then
+    echo "extension=pinba.so" > "/etc/php/${PHPVER}/fpm/conf.d/20-pinba.ini"
+    echo "pinba.enabled=1" >> "/etc/php/${PHPVER}/fpm/conf.d/20-pinba.ini"
+    echo "pinba.server=${PINBA_SERVER}:${PINBA_PORT}" >> "/etc/php/${PHPVER}/fpm/conf.d/20-pinba.ini"
 fi
 
 trap clean_up TERM
