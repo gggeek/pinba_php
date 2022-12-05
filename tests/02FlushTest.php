@@ -33,10 +33,12 @@ class FlushTest extends TestCase
             throw new PHPUnit_Framework_Exception("Can not connect to the Pinba DB");
         }
 
-        // Pinba 2 has fewer tables than pinba 1
+        // Pinba 2 does not have raw data tables
         $r = self::$db->query("SELECT table_name FROM information_schema.tables  WHERE table_schema='pinba' AND table_name='request';")->fetch_row();
         if (count($r)) {
             self::$pinba1 = true;
+            // this is required to start the reporting
+            self::$db->query("SELECT * FROM report_by_script_name;")->fetch_all(MYSQLI_ASSOC);
         }
     }
 
