@@ -1,6 +1,6 @@
 <?php
 
-use PinbaPhp\Polyfill\Pinba as pinba;
+use PinbaPhp\Polyfill\PinbaFunctions as pinba;
 use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 class FlushTest extends TestCase

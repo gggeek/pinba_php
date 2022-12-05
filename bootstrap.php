@@ -7,7 +7,7 @@
  * @copyright (C) G. Giunta 2011 - 2022
  */
 
-use PinbaPhp\Polyfill\Pinba as pinba;
+use PinbaPhp\Polyfill\PinbaFunctions as pinba;
 
 // try to start time measurement as soon as we can
 pinba::init();
@@ -330,21 +330,21 @@ if (!function_exists('pinba_flush')) {
 }
 
 if (!defined('PINBA_FLUSH_ONLY_STOPPED_TIMERS')) {
-    define('PINBA_FLUSH_ONLY_STOPPED_TIMERS', pinba::PINBA_FLUSH_ONLY_STOPPED_TIMERS);
+    define('PINBA_FLUSH_ONLY_STOPPED_TIMERS', Pinba::PINBA_FLUSH_ONLY_STOPPED_TIMERS);
 }
 
 if (!defined('PINBA_FLUSH_RESET_DATA')) {
-    define('PINBA_FLUSH_RESET_DATA', pinba::PINBA_FLUSH_RESET_DATA);
+    define('PINBA_FLUSH_RESET_DATA', Pinba::PINBA_FLUSH_RESET_DATA);
 }
 
 if (!defined('PINBA_ONLY_RUNNING_TIMERS')) {
-    define('PINBA_ONLY_RUNNING_TIMERS', pinba::PINBA_ONLY_RUNNING_TIMERS);
+    define('PINBA_ONLY_RUNNING_TIMERS', Pinba::PINBA_ONLY_RUNNING_TIMERS);
 }
 
 if (!defined('PINBA_AUTO_FLUSH')) {
-    define('PINBA_AUTO_FLUSH', pinba::PINBA_AUTO_FLUSH);
+    define('PINBA_AUTO_FLUSH', Pinba::PINBA_AUTO_FLUSH);
 }
 
 if (!defined('PINBA_ONLY_STOPPED_TIMERS')) {
-    define('PINBA_ONLY_STOPPED_TIMERS', pinba::PINBA_ONLY_STOPPED_TIMERS);
+    define('PINBA_ONLY_STOPPED_TIMERS', Pinba::PINBA_ONLY_STOPPED_TIMERS);
 }

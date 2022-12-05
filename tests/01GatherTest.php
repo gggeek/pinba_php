@@ -1,6 +1,6 @@
 <?php
 
-use PinbaPhp\Polyfill\Pinba as pinba;
+use PinbaPhp\Polyfill\PinbaFunctions as pinba;
 use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 class GatherTest extends TestCase
@@ -109,12 +109,12 @@ class GatherTest extends TestCase
         pinba::timer_stop($t1);
         $timers = pinba::timers_get();
         $this->assertEquals(2, count($timers), 'there should be 2 timers');
-        $timers = pinba::timers_get(pinba::PINBA_ONLY_STOPPED_TIMERS);
+        $timers = pinba::timers_get(Pinba::PINBA_ONLY_STOPPED_TIMERS);
         $this->assertEquals(1, count($timers), 'there should be 1 stopped timer');
         pinba::timers_stop();
         $timers = pinba::timers_get();
         $this->assertEquals(2, count($timers), 'there should be 2 timers');
-        $timers = pinba::timers_get(pinba::PINBA_ONLY_STOPPED_TIMERS);
+        $timers = pinba::timers_get(Pinba::PINBA_ONLY_STOPPED_TIMERS);
         $this->assertEquals(2, count($timers), 'there should be 2 stopped timer');
     }
 }
