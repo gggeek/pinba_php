@@ -3,7 +3,7 @@
 use PinbaPhp\Polyfill\Pinba as pinba;
 use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
-class ClassTest extends TestCase
+class GatherTest extends TestCase
 {
     /**
      * @before
@@ -55,14 +55,66 @@ class ClassTest extends TestCase
         $this->assertSame(array('whatever'), $v['data'], 'Timer data should keep injected value');
         $this->assertSame(false, $v['started'], 'Timer started should be false after stop');
 
+        $v1 = $v['value'];
         $r = pinba::timer_stop($t);
         $this->assertSame(false, $r, 'timer_stop should return false for stopped timers');
 
-        sleep(1);
+        usleep(100000);
         $v = pinba::timer_get_info($t);
-        $this->assertLessThan(1.5, $v['value'], 'Timer time should not increase after stop');
+        $this->assertEquals($v1, $v['value'], 'Timer time should not increase after stop');
 
         $v2 = pinba::get_info();
         $this->assertSame($v, $v2['timers'][0], 'get_info should return same timer as timer_get_info');
+
+        pinba::timer_data_merge($t, array('x' => 'y'));
+        $v = pinba::timer_get_info($t);
+        $this->assertEquals(array('whatever', 'x' => 'y'), $v['data'], 'Timer data should have merged value');
+
+        pinba::timer_data_replace($t, array('x' => 'y'));
+        $v = pinba::timer_get_info($t);
+        $this->assertEquals(array('x' => 'y'), $v['data'], 'Timer data should have replaced value');
+
+        pinba::timer_tags_merge($t, array('x' => 'y'));
+        $v = pinba::timer_get_info($t);
+        $this->assertEquals(array('tag1' => 'hello', 'tag2' => 10, 'x' => 'y'), $v['tags'], 'Timer tags should have merged value');
+
+        pinba::timer_tags_replace($t, array('x' => 'y'));
+        $v = pinba::timer_get_info($t);
+        $this->assertEquals(array('x' => 'y'), $v['tags'], 'Timer tags should have replaced value');
+    }
+
+    function testNoTimer()
+    {
+        $this->expectException('\PHPUnit\Framework\Error\Warning');
+        $v = pinba::timer_get_info(-1);
+    }
+
+    function testTagDelete()
+    {
+        pinba::reset();
+        $t = pinba::timer_start(array('tag1' => 'x'));
+        $r = pinba::timer_delete($t);
+        $this->assertEquals(true, $r, 'the timer should have been deleted');
+        $timers = pinba::timers_get();
+        $this->assertEquals(0, count($timers), 'there should be no timers');
+        $r = pinba::timer_delete(999);
+        $this->assertEquals(false, $r, 'inexisting timer should not have been deleted');
+    }
+
+    function testGetTimers()
+    {
+        pinba::reset();
+        $t1 = pinba::timer_start(array('tag1' => 'a'));
+        $t2 = pinba::timer_start(array('tag1' => 'b'));
+        pinba::timer_stop($t1);
+        $timers = pinba::timers_get();
+        $this->assertEquals(2, count($timers), 'there should be 2 timers');
+        $timers = pinba::timers_get(pinba::PINBA_ONLY_STOPPED_TIMERS);
+        $this->assertEquals(1, count($timers), 'there should be 1 stopped timer');
+        pinba::timers_stop();
+        $timers = pinba::timers_get();
+        $this->assertEquals(2, count($timers), 'there should be 2 timers');
+        $timers = pinba::timers_get(pinba::PINBA_ONLY_STOPPED_TIMERS);
+        $this->assertEquals(2, count($timers), 'there should be 2 stopped timer');
     }
 }

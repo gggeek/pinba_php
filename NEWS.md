@@ -1,3 +1,7 @@
+vXX - unreleased
+
+* fixed default value for `$flag` argument of `pinba_timers_get`
+
 v0.2 - 5/12/2022
 
 * added constants: `PINBA_FLUSH_ONLY_STOPPED_TIMERS`, `PINBA_FLUSH_RESET_DATA`, `PINBA_ONLY_RUNNING_TIMERS`, `PINBA_AUTO_FLUSH`,

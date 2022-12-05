@@ -162,10 +162,10 @@ if (!function_exists('pinba_timers_get')) {
     /**
      * Get all timers info.
      *
-     * @param int $flag
+     * @param int $flag - can be set to PINBA_ONLY_STOPPED_TIMERS
      * @return array
      */
-    function pinba_timers_get($flag = pinba::PINBA_ONLY_STOPPED_TIMERS)
+    function pinba_timers_get($flag = 0)
     {
         return pinba::timers_get($flag);
     }

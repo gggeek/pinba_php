@@ -307,7 +307,7 @@ class Pinba
      * @param int $flag
      * @return array
      */
-    public static function timers_get($flag = self::PINBA_ONLY_STOPPED_TIMERS)
+    public static function timers_get($flag = 0)
     {
         $out = array();
         $time = microtime(true);
@@ -548,10 +548,7 @@ class Pinba
                 fclose($fp);
 
                 if ($flags & self::PINBA_FLUSH_RESET_DATA) {
-                    self::$timers = array();
-                    self::$tags = array();
-                    self::$request_time = microtime(true);
-                    /// @todo the C code resets as well doc_size, mem_peak_usage, req_count, ru_*,
+                    self::reset();
                 }
 
                 return $msgLen == $len;
@@ -675,6 +672,14 @@ class Pinba
         $struct["timer_ru_stime"] = array(); /// @todo
 
         return $struct;
+    }
+
+    public static function reset()
+    {
+        self::$timers = array();
+        self::$tags = array();
+        self::$request_time = microtime(true);
+        /// @todo the C code resets as well doc_size, mem_peak_usage, req_count, ru_*,
     }
 
     /**
