@@ -1,17 +1,17 @@
 <?php
 /**
- * A sample php file that uses the pinba php extension
+ * A sample php file demoing use of the pinba php extension: simple usage
  */
 
 // Start time measurement _asap_: before autoloading even kicks in
-$starttime = microtime(true);
+$startTime = microtime(true);
 
 include('vendor/autoload.php');
 
 // This is optional - if omitted, time measurement will start during class autoloading in the line above, and be just
 // a little less accurate
 use \PinbaPhp\Polyfill\PinbaFunctions as pinba;
-pinba::init($starttime);
+pinba::init($startTime);
 
 // Do some stuff here ...
 
@@ -21,8 +21,10 @@ $t = pinba_timer_start(array("group"=>"mysql", "server"=>"db1", "operation"=>"se
 $result = mysqli_query("SELECT ... FROM ... WHERE ...", $connection);
 pinba_timer_stop($t);
 
-// That's all folks!
-//
+// Do some more stuff
+// ...
+// Finally: that's all folks!
+
 // Memory usage, execution time, timers info etc. will be automatically collected and at the end of the execution
 // of this page will be flushed to the Pinba server via an udp network packet, provided you have set `pinba.enabled` and
 // `pinba.server` in php.ini.

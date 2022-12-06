@@ -68,6 +68,12 @@ Includes code from the Protobuf for PHP lib by Iván -DrSlump- Montes: https://g
 
 Other known packages exist implementing the same idea, such as: https://github.com/vearutop/pinba-pure-php
 
+## FAQ
+
+- **Q:** Can I run the polyfill in conjunction with the pinba php extension? **A:** yes, although I fail to see the
+  reason why you would do that. When doing so, unless taking care to selectively disable either the php extension
+  or this bundle (f.e. via calls to `Pinba::ini_set` in your code), you will get double data reported to the Pinba server
+
 ## Running tests
 
 The recommended way to run the library test suite is via the provided Docker containers.

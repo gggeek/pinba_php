@@ -5,6 +5,7 @@ vXXX - unreleased
 * improved: added support for `pinba.auto_flush` configuration option
 * improved: report automatically to Pinba the script's http status code by default
 * improved: replicate extension behaviour: default `req_count` is 1 in data from `get_info()`, but 0 as sent to the server
+* improved: added one more sample file: doc/measure_body_size.php
 
 v0.3 - 6/12/2022
 
