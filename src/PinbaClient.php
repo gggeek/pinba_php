@@ -135,14 +135,21 @@ class PinbaClient extends Pinba
 
     /**
      * @param null|int $flags - optional flags, bitmask. Override object flags if specified. NB: 0 != null
-     * @return void
+     * @return bool
      */
     public function send($flags = null)
     {
-        $message = $this->getData($flags);
-        foreach($this->servers as $server) {
-            self::_send($server, $message);
+        if (!count($this->servers)) {
+            return false;
         }
+
+        $message = $this->getData($flags);
+
+        $out = true;
+        foreach($this->servers as $server) {
+            $out = $out & self::_send($server, $message);
+        }
+        return $out;
     }
 
     /**
