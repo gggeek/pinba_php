@@ -148,8 +148,19 @@ class PinbaClient extends Pinba
         if ($flags === null) {
             $flags = $this->flags;
         }
+
+        if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
+            $this->stopTimers(microtime(true));
+        }
         $info = $this->getInfo();
-/// @todo add support for flags - test ext. behaviour 1st
+        if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
+            foreach($info['timers'] as $id => $timer) {
+                if ($timer['started']) {
+                    unset($info['timers'][$id]);
+                }
+            }
+        }
+
         return $this->getPacket($info);
     }
 }

@@ -255,15 +255,7 @@ class PinbaFunctions extends Pinba
     public static function timers_stop()
     {
         $time = microtime(true);
-        foreach (self::instance()->timers as &$timer)
-        {
-            if ($timer["started"])
-            {
-                $timer["started"] = false;
-                $timer["value"] = $time - $timer["value"];
-            }
-        }
-        return true;
+        return self::instance()->stopTimers($time);
     }
 
     /**
@@ -441,9 +433,8 @@ class PinbaFunctions extends Pinba
         {
             $i = self::instance();
 
-            /// q:should we stop timers even if the socket can not be opened?
             if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
-                self::timers_stop();
+                $i->stopTimers(microtime(true));
             }
             $info = $i->getInfo();
             if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
@@ -453,6 +444,7 @@ class PinbaFunctions extends Pinba
                     }
                 }
             }
+
             if ($script_name != null)
             {
                 $info["script_name"] = $script_name;
@@ -479,6 +471,7 @@ class PinbaFunctions extends Pinba
         $i->document_size = null;
         $i->memory_peak = null;
         $i->request_count = 1;
+        /// @todo double check in extension C code: are these reset to null, or to current rusage?
         $i->rusage = array();
     }
 
@@ -519,7 +512,7 @@ class PinbaFunctions extends Pinba
         if (!self::$shutdown_registered)
         {
             self::$shutdown_registered = true;
-            register_shutdown_function(array($i, 'flush'));
+            register_shutdown_function('PinbaPhp\Polyfill\PinbaFunctions::flush');
         }
     }
 }

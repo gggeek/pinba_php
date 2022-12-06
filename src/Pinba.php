@@ -91,6 +91,19 @@ class Pinba
         return true;
     }
 
+    protected function stopTimers($time)
+    {
+        foreach ($this->timers as &$timer)
+        {
+            if ($timer["started"])
+            {
+                $timer["started"] = false;
+                $timer["value"] = $time - $timer["value"];
+            }
+        }
+        return true;
+    }
+
     protected function getTimerInfo($timer, $time)
     {
         if (isset($this->timers[$timer]))
@@ -181,6 +194,7 @@ class Pinba
         }
 
         return array(
+            /// @todo in the extension, memory_get_peak_usage is not used when this is called froma PinbaClient
             'mem_peak_usage' => ($this->memory_peak !== null ? $this->memory_peak :  memory_get_peak_usage(true)),
             'req_time' => $time - $this->request_time,
             'ru_utime' => $ruUtime,
