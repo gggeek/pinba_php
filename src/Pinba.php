@@ -315,18 +315,23 @@ class Pinba
     }
 
     /**
-     * @param string $server
+     * @param string $server see https://github.com/tony2001/pinba_engine/wiki/PHP-extension#pinbaserver for the supportde syntax
      * @param string $message
      * @return bool
-     * @todo add IPv6 support for $server (see http://pinba.org/wiki/Manual:PHP_extension)
      */
     protected static function _send($server, $message)
     {
         $port = 30002;
-        if (count($parts = explode(':', $server)) > 1)
-        {
-            (int)$port = $parts[1];
-            $server = $parts[0];
+        if (preg_match('/^\\[(.+)\\]:([0-9]+)$/', $server, $matches)) {
+            $server = $matches[1];
+            $port = (int)$matches[2];
+        } else {
+            if (count($parts = explode(':', $server)) == 2)
+            {
+                // IPv4 with port
+                $port = (int)$parts[1];
+                $server = $parts[0];
+            }
         }
 
         /// @todo should we log a more specific warning in case of failures to open the udp socket? f.e. the pinba

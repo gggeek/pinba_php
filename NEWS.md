@@ -1,3 +1,7 @@
+vXXX - unreleased
+
+* fixed: parsing IPv6 addresses, or addresses in the form `[127.0.0.1]:8080` in `pinba_server`
+
 v0.3 - 6/12/2022
 
 * fixed default value for `$flag` argument of `pinba_timers_get`
