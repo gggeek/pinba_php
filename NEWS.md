@@ -1,6 +1,8 @@
 vXXX - unreleased
 
 * fixed: parsing IPv6 addresses, or addresses in the form `[127.0.0.1]:8080` in `pinba_server`
+* improved: added support for `pinba.auto_flush` configuration option
+* improved: replicate extension behaviour: default `req_count` is 1 in data from `get_info()`, but 0 as sent to the server
 
 v0.3 - 6/12/2022
 
