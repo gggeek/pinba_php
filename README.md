@@ -5,8 +5,6 @@ Pure-php reimplementation of the "PHP extension for Pinba".
 
 See http://pinba.org for the original.
 
-*WORK IN PROGRESS*
-
 ## Requirements
 
 PHP 5.3 or any later version.
@@ -30,6 +28,8 @@ unless you have added explicit calls to the pinba api in your php code.
 
 See the API described at https://github.com/tony2001/pinba_engine/wiki/PHP-extension
 
+A trivial usage example can be found in [docs/sample.php](docs/sample.php).
+
 For viewing the gathered metrics, check out https://github.com/intaro/pinboard, https://github.com/pinba-server/pinba-server
 or https://github.com/ClickHouse-Ninja/Proton
 
@@ -40,24 +40,27 @@ We strive to implement the same API as Pinba extension ver. 1.1.2.
 As for the server side, the library is tested for compatibility against both a Pinba server and a Pinba2 one.
 
 Features not (yet) supported:
-- ini setting `pinba.resolve_interval`
 - 3rd argument `$hit_count` in function `pinba_timer_start` is accepted but not used. Same for `PinbaClient` instances
-- in the data reported by `pinba_get_info` and reported to the Pinba server, `doc_size` has always a value of 0. This
-  can be worked around by using an instance of `PinbaClient` and calling `setDocumentSize`
 - in the data reported to the Pinba server, the following information has always a fixed value or is not reported at all:
-  `status`, `memory_footprint`, `requests`. Again, using a `PinbaClient` instance can fix that
+  `requests`
 - Timers data misses `ru_utime` and `ru_stime` members. This is true also for timers added to `PinbaClient` instances
+- ini setting `pinba.resolve_interval` is not supported and most likely never will
 
 Known issues - which cannot be fixed:
 - lack in precision in time reporting: the time reported for page execution will be much shorter with any php code than
   it can be measured with a php extension. We suggest thus not to take the time reported by this package as an absolute
   value, but rather use it to check macro-issues, such as a page taking 10 seconds to run, or 10 times as much as another
-  page
+  page. In the demo file [docs/sample.php](docs/sample.php) we showcase how to make time measurement as precise as possible
 - impact on system performances: the cpu time and ram used by this implementation (which runs on every page of your site!)
   are also bigger than the resources used by the php extension. It is up to you to decide if the extra load added to
   your server by using this package is worth it or not, esp. for heavily loaded production servers
-- the warnings raised when incorrect data is passed to the pinba php functions are of severity E_USER_WARNING instead of
-  E_WARNING
+- the warnings raised when incorrect data is passed to the pinba php functions are of severity `E_USER_WARNING` instead of
+  `E_WARNING`
+- in the data reported by `pinba_get_info` and reported to the Pinba server, `doc_size` has always a value of 0. This
+  can be worked around by using an instance of `PinbaClient` and calling `setDocumentSize`
+- in the data reported to the Pinba server, `memory_footprint` has always a fixed value of 0 or is not reported at all.
+  Again, using a `PinbaClient` instance can fix that - but there is no php function available that I know of which can
+  report the equivalent usage of the `mallinfo` C call done by the php extension
 
 ## Notes
 
@@ -80,9 +83,14 @@ The full sequence of operations is:
     # and, once you have finished all testing related work:
     ./tests/ci/vm.sh cleanup
 
-By default, tests are run using php 7.4 in a Container based on Ubuntu 20 Focal.
-You can change the version of PHP and Ubuntu in use by setting the environment variables PHP_VERSION and UBUNTU_VERSION
-before building the Container.
+By default, tests are run using php 7.4 in a Container based on Ubuntu 20 Focal. The data is sent to a container running
+the original Pinba server.
+
+You can change the version of PHP and Ubuntu in use by setting the environment variables `PHP_VERSION` and `UBUNTU_VERSION`
+before building the Containers.
+
+You can switch the target Container used for the testsuite to one running Pinba2 by setting the environment variables
+`PINBA_SERVER=pinba2` and `PINBA_PORT=3002` before starting the Containers.
 
 ### Testing tips
 

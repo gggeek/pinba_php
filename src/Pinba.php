@@ -109,7 +109,6 @@ class Pinba
             if ($timer["started"]) {
                 $timer["value"] = $time - $timer["value"];
             }
-            /// @todo should we round the timer value?
             return $timer;
         }
 
@@ -121,7 +120,6 @@ class Pinba
      * Checks that tags are fit for usage
      * @param array $tags
      * @return bool
-     * @todo add calls to this
      */
     protected static function verifyTags($tags)
     {
@@ -185,9 +183,11 @@ class Pinba
             $server_name = $_SERVER['SERVER_NAME'];
         }
         $document_size = $this->document_size;
-        if ($document_size === null) {
-
-        }
+        /// @todo parse the results of `headers_list()` looking for `Content-Length`
+        ///       Note: that might not work for most scenarios, including simple ones such as using php-fpm and no
+        ///       frontend controllers at all, even if there is a `flush` call executed before we reach here
+        //if ($document_size === null) {
+        //}
 
         return array(
             /// @todo in the extension, memory_get_peak_usage is not used when this is called from a PinbaClient

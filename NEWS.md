@@ -1,9 +1,9 @@
 vXXX - unreleased
 
-* fixed: parsing IPv6 addresses, or addresses in the form `[127.0.0.1]:8080` in `pinba_server`
 * fixed a bug in merging timers tags, introduced in v0.3
+* fixed: parsing IPv6 addresses, or addresses in the form `[127.0.0.1]:8080` in `pinba_server` configuration option
 * improved: added support for `pinba.auto_flush` configuration option
-* improved: report to Pinba the scripts http status code automatically by default
+* improved: report automatically to Pinba the script's http status code by default
 * improved: replicate extension behaviour: default `req_count` is 1 in data from `get_info()`, but 0 as sent to the server
 
 v0.3 - 6/12/2022
