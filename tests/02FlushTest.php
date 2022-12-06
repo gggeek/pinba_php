@@ -82,7 +82,7 @@ class FlushTest extends TestCase
             $this->assertEquals(1, count($r), 'no data found in the db for a flush call');
             $r = $r[0];
             $this->assertEquals($v['hostname'], $r['hostname'], 'hostname data was not sent correctly to the db');
-            $this->assertEquals($v['req_count'], $r['req_count'], 'req_count data was not sent correctly to the db');
+            $this->assertEquals(0, $r['req_count'], 'req_count data was not sent correctly to the db');
             $this->assertEquals($v['server_name'], $r['server_name'], 'server_name data was not sent correctly to the db');
             $this->assertEquals($v['script_name'], $r['script_name'], 'script_name data was not sent correctly to the db');
             $this->assertEquals($v['doc_size'], (int)$r['doc_size'], 'doc_size data was not sent correctly to the db');
