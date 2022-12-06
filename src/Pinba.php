@@ -93,10 +93,8 @@ class Pinba
 
     protected function stopTimers($time)
     {
-        foreach ($this->timers as &$timer)
-        {
-            if ($timer["started"])
-            {
+        foreach ($this->timers as &$timer) {
+            if ($timer["started"]) {
                 $timer["started"] = false;
                 $timer["value"] = $time - $timer["value"];
             }
@@ -106,11 +104,9 @@ class Pinba
 
     protected function getTimerInfo($timer, $time)
     {
-        if (isset($this->timers[$timer]))
-        {
+        if (isset($this->timers[$timer])) {
             $timer = $this->timers[$timer];
-            if ($timer["started"])
-            {
+            if ($timer["started"]) {
                 $timer["value"] = $time - $timer["value"];
             }
             /// @todo should we round the timer value?
@@ -133,7 +129,7 @@ class Pinba
             trigger_error("tags array cannot be empty", E_USER_WARNING);
             return false;
         }
-        foreach($tags as $key => $val) {
+        foreach ($tags as $key => $val) {
             if (is_object($val) || is_array($val) || is_resource($val)) {
                 trigger_error("tags cannot have non-scalar values", E_USER_WARNING);
                 return false;
@@ -149,26 +145,6 @@ class Pinba
     protected function getInfo()
     {
         $time = microtime(true);
-
-        if ($this->hostname === null)
-        {
-            if (php_sapi_name() == 'cli')
-            {
-                $this->hostname = 'php';
-            }
-            else
-            {
-                $this->hostname = gethostname();
-            }
-        }
-        if ($this->script_name === null && isset($_SERVER['SCRIPT_NAME']))
-        {
-            $this->script_name = $_SERVER['SCRIPT_NAME'];
-        }
-        if ($this->server_name === null && isset($_SERVER['SERVER_NAME']))
-        {
-            $this->server_name = $_SERVER['SERVER_NAME'];
-        }
 
         if ($this->rusage) {
             $ruUtime = reset($this->rusage);
@@ -188,23 +164,43 @@ class Pinba
         }
 
         $timers = array();
-        foreach($this->timers as $id => $t)
-        {
+        foreach ($this->timers as $id => $t) {
             $timers[] = $this->getTimerInfo($id, $time);
         }
 
+        $hostname = $this->hostname;
+        if ($hostname === null) {
+            if (php_sapi_name() == 'cli') {
+                $hostname = 'php';
+            } else {
+                $hostname = gethostname();
+            }
+        }
+        $script_name = $this->script_name;
+        if ($script_name === null && isset($_SERVER['SCRIPT_NAME'])) {
+            $script_name = $_SERVER['SCRIPT_NAME'];
+        }
+        $server_name = $this->server_name;
+        if ($server_name === null && isset($_SERVER['SERVER_NAME'])) {
+            $server_name = $_SERVER['SERVER_NAME'];
+        }
+        $document_size = $this->document_size;
+        if ($document_size === null) {
+
+        }
+
         return array(
-            /// @todo in the extension, memory_get_peak_usage is not used when this is called froma PinbaClient
+            /// @todo in the extension, memory_get_peak_usage is not used when this is called from a PinbaClient
             'mem_peak_usage' => ($this->memory_peak !== null ? $this->memory_peak :  memory_get_peak_usage(true)),
             'req_time' => $time - $this->request_time,
             'ru_utime' => $ruUtime,
             'ru_stime' => $ruStime,
             'req_count' => ($this->request_count !== null ? $this->request_count : 0),
-            'doc_size' => ($this->document_size !== null ? $this->document_size : 0),
+            'doc_size' => ($document_size !== null ? $document_size : 0),
             'schema' => $this->schema,
-            'server_name' => ($this->server_name !== null ? $this->server_name : 'unknown'),
-            'script_name' => ($this->script_name !== null ? $this->script_name : 'unknown'),
-            'hostname' => ($this->hostname !== null ? $this->hostname : 'unknown'),
+            'server_name' => ($server_name !== null ? $server_name : 'unknown'),
+            'script_name' => ($script_name !== null ? $script_name : 'unknown'),
+            'hostname' => ($hostname !== null ? $hostname : 'unknown'),
             'timers' => $timers,
             'tags' => $this->tags
         );
@@ -225,82 +221,80 @@ class Pinba
 
         // massage info into correct format for pinba server
 
-        $struct["hostname"] = $this->hostname;
-        $struct["status"] = $this->status;
+        $status = $this->status;
+        if ($status === null) {
+            if (($code = http_response_code()) !== false) {
+                $status = $code;
+            }
+        }
+
+        $struct["status"] = $status;
         $struct["memory_footprint"] = $this->memory_footprint;
 
-        foreach(array(
+        foreach (array(
             "mem_peak_usage" => "memory_peak",
             "req_time" => "request_time",
             "req_count" => "request_count",
-            "doc_size" => "document_size") as $old => $new)
-        {
+            "doc_size" => "document_size") as $old => $new) {
             $struct[$new] = $struct[$old];
         }
 
         // merge timers by tags
         $tags = array();
-        foreach($struct["timers"] as $id => $timer)
-        {
-            $tags = $timer["tags"];
-            ksort($tags);
-            $tag = md5(var_export($tags, true));
-            if (isset($tags[$tag]))
-            {
-                $struct["timers"][$tags[$tag]]["value"] = $struct["timers"][$tags[$tag]]["value"] + $timer["value"];
-                $struct["timers"][$tags[$tag]]["count"] = $struct["timers"][$tags[$tag]]["count"] + 1;
+        foreach ($struct["timers"] as $id => $timer) {
+            $ttags = $timer["tags"];
+            ksort($ttags);
+            $tagHash = md5(var_export($ttags, true));
+            if (isset($tags[$tagHash])) {
+                $originalId = $tags[$tagHash];
+                $struct["timers"][$originalId]["value"] = $struct["timers"][$originalId]["value"] + $timer["value"];
+                $struct["timers"][$originalId]["count"] = $struct["timers"][$originalId]["count"] + 1;
                 unset($struct["timers"][$id]);
-            }
-            else
-            {
-                $tags[$tag] = $id;
+            } else {
+                $tags[$tagHash] = $id;
                 $struct["timers"][$id]["count"] = 1;
             }
         }
-        // build tag dictionary and index timer tags
+
+        // build tag dictionary and add to timers the tags dictionary ids
         $dict = array();
-        foreach($struct["timers"] as $id => $timer)
-        {
-            foreach($timer['tags'] as $tag => $value)
-            {
-                if (($tagid = array_search($tag, $dict)) === false)
-                {
+        foreach ($struct['timers'] as $id => $timer) {
+            foreach ($timer['tags'] as $tag => $value) {
+                if (($tagid = array_search($tag, $dict)) === false) {
                     $tagid = count($dict);
                     $dict[] = $tag;
                 }
-                if (($valueid = array_search($value, $dict)) === false)
-                {
+                if (($valueid = array_search($value, $dict)) === false) {
                     $valueid = count($dict);
                     $dict[] = $value;
                 }
-                $struct["timers"][$id]['tagids'][$tagid] = $valueid;
+                $struct['timers'][$id]['tagids'][$tagid] = $valueid;
             }
         }
+
         $struct["timer_hit_count"] = array();
         $struct["timer_value"] = array();
         $struct["timer_tag_count"] = array();
         $struct["timer_tag_name"] = array();
         $struct["timer_tag_value"] = array();
-        foreach($struct["timers"] as $timer)
-        {
+        foreach ($struct["timers"] as $timer) {
             $struct["timer_hit_count"][] = $timer["count"];
             $struct["timer_value"][] = $timer["value"];
             $struct["timer_tag_count"][] = count($timer["tags"]);
-            foreach($timer["tagids"] as $key => $val)
-            {
+            foreach ($timer["tagids"] as $key => $val) {
                 $struct["timer_tag_name"][] = $key;
                 $struct["timer_tag_value"][] = $val;
             }
         }
+
         $struct["dictionary"] = array();
-        foreach($dict as $tag)
-        {
+        foreach ($dict as $tag) {
             $struct["dictionary"][] = $tag;
         }
 
         $struct["tag_name"] = array();
         $struct["tag_value"] = array();
-        foreach($struct["tags"] as $name => $value) {
+        foreach ($struct["tags"] as $name => $value) {
             $struct["tag_name"][] = $name;
             $struct["tag_value"][] = $value;
         }
@@ -326,8 +320,7 @@ class Pinba
             $server = $matches[1];
             $port = (int)$matches[2];
         } else {
-            if (count($parts = explode(':', $server)) == 2)
-            {
+            if (count($parts = explode(':', $server)) == 2) {
                 // IPv4 with port
                 $port = (int)$parts[1];
                 $server = $parts[0];
@@ -338,8 +331,7 @@ class Pinba
         ///       extension on invalid hostname triggers:
         ///       PHP Warning:  Unknown: failed to resolve Pinba server hostname 'xxx': Name or service not known in Unknown on line 0
         $fp = fsockopen("udp://$server", $port, $errno, $errstr);
-        if ($fp)
-        {
+        if ($fp) {
             $msgLen = strlen($message);
             $len = fwrite($fp, $message, $msgLen);
             fclose($fp);
