@@ -2,13 +2,13 @@
 
 namespace PinbaPhp\Polyfill;
 
-abstract class Pinba
+class Pinba
 {
-    const PINBA_FLUSH_ONLY_STOPPED_TIMERS = 1;
-    const PINBA_FLUSH_RESET_DATA = 2;
-    const PINBA_ONLY_RUNNING_TIMERS = 4;
-    const PINBA_AUTO_FLUSH = 8;
-    const PINBA_ONLY_STOPPED_TIMERS = 1;
+    const FLUSH_ONLY_STOPPED_TIMERS = 1;
+    const FLUSH_RESET_DATA = 2;
+    const ONLY_RUNNING_TIMERS = 4;
+    const AUTO_FLUSH = 8;
+    const ONLY_STOPPED_TIMERS = 1;
 
     protected static $message_proto = array(
         1 => array("hostname", Prtbfr::TYPE_STRING), // bytes for pinba2
@@ -52,6 +52,10 @@ abstract class Pinba
 
     protected static $options = array();
 
+    /// Make this class "abstract", in a way that subclasses can instantiate it
+    protected function __construct() {
+    }
+
     public function setHostname($hostname)
     {
         $this->hostname = $hostname;
@@ -78,11 +82,16 @@ abstract class Pinba
 
     public function setRequestTime($request_time)
     {
+        if ($request_time < 0) {
+            trigger_error("negative time value passed ($request_time), changing it to 0", E_USER_WARNING);
+            $request_time = 0;
+        }
+
         $this->request_time = $request_time;
         return true;
     }
 
-    protected function _timer_get_info($timer, $time)
+    protected function getTimerInfo($timer, $time)
     {
         if (isset($this->timers[$timer]))
         {
@@ -99,7 +108,32 @@ abstract class Pinba
         return false;
     }
 
-    protected function _get_info()
+    /**
+     * Checks that tags are fit for usage
+     * @param array $tags
+     * @return bool
+     * @todo add calls to this
+     */
+    protected static function verifyTags($tags)
+    {
+        if (!$tags) {
+            trigger_error("tags array cannot be empty", E_USER_WARNING);
+            return false;
+        }
+        foreach($tags as $key => $val) {
+            if (is_object($val) || is_array($val) || is_resource($val)) {
+                trigger_error("tags cannot have non-scalar values", E_USER_WARNING);
+                return false;
+            }
+            if (is_int($key)) {
+                trigger_error("tags can only have string names (i.e. tags array cannot contain numeric indexes)", E_USER_WARNING);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected function getInfo()
     {
         $time = microtime(true);
 
@@ -143,7 +177,7 @@ abstract class Pinba
         $timers = array();
         foreach($this->timers as $id => $t)
         {
-            $timers[] = $this->_timer_get_info($id, $time);
+            $timers[] = $this->getTimerInfo($id, $time);
         }
 
         return array(
@@ -163,22 +197,24 @@ abstract class Pinba
     }
 
     /**
-     * Builds the php array structure to be sent to the pinba server.
-     * NB: depending on the value of $flags, it will stop all running timers
-     * @param array $struct the data returned by `_get_info`. NB: data from this object will be added to that!
-     * @param string|null $script_name
-     * @return array
-     * @todo we could move injection of hostname, status, memory_footprint to the caller, to avoid data coming from 2 sources
+     * Builds the php array structure to be sent to the pinba server, and encodes it as protobuffer.
+     * @param null|array $struct Allows injecting the data returned by `getInfo`, after having modified it. NB: data
+     *                   from this object will be added to that!
+     * @return string
      */
-    protected function getPacketInfo($struct, $script_name = null)
+    protected function getPacket($struct = null)
     {
+        // allow injection of custom starting data
+        if ($struct === null) {
+            $struct = $this->getInfo();
+        }
+
         // massage info into correct format for pinba server
 
         $struct["hostname"] = $this->hostname;
-        if ($script_name != null)
-        {
-            $struct["script_name"] = $script_name;
-        }
+        $struct["status"] = $this->status;
+        $struct["memory_footprint"] = $this->memory_footprint;
+
         foreach(array(
             "mem_peak_usage" => "memory_peak",
             "req_time" => "request_time",
@@ -192,7 +228,9 @@ abstract class Pinba
         $tags = array();
         foreach($struct["timers"] as $id => $timer)
         {
-            $tag = md5(var_export($timer["tags"], true));
+            $tags = $timer["tags"];
+            ksort($tags);
+            $tag = md5(var_export($tags, true));
             if (isset($tags[$tag]))
             {
                 $struct["timers"][$tags[$tag]]["value"] = $struct["timers"][$tags[$tag]]["value"] + $timer["value"];
@@ -246,12 +284,6 @@ abstract class Pinba
             $struct["dictionary"][] = $tag;
         }
 
-        /// @todo implement the missing fields below
-
-        $struct["status"] = $this->status;
-        $struct["memory_footprint"] = $this->memory_footprint;
-        $struct["requests"] = array(); /// @todo
-
         $struct["tag_name"] = array();
         $struct["tag_value"] = array();
         foreach($struct["tags"] as $name => $value) {
@@ -259,10 +291,48 @@ abstract class Pinba
             $struct["tag_value"][] = $value;
         }
 
+        /// @todo implement the missing fields below
+
+        $struct["requests"] = array(); /// @todo
         $struct["timer_ru_utime"] = array(); /// @todo
         $struct["timer_ru_stime"] = array(); /// @todo
 
-        return $struct;
+        return Prtbfr::encode($struct, self::$message_proto);
+    }
+
+    /**
+     * @param string $server
+     * @param string $message
+     * @return bool
+     * @todo add IPv6 support for $server (see http://pinba.org/wiki/Manual:PHP_extension)
+     */
+    protected static function _send($server, $message)
+    {
+        $port = 30002;
+        if (count($parts = explode(':', $server)) > 1)
+        {
+            (int)$port = $parts[1];
+            $server = $parts[0];
+        }
+
+        /// @todo should we log a more specific warning in case of failures to open the udp socket? f.e. the pinba
+        ///       extension on invalid hostname triggers:
+        ///       PHP Warning:  Unknown: failed to resolve Pinba server hostname 'xxx': Name or service not known in Unknown on line 0
+        $fp = fsockopen("udp://$server", $port, $errno, $errstr);
+        if ($fp)
+        {
+            $msgLen = strlen($message);
+            $len = fwrite($fp, $message, $msgLen);
+            fclose($fp);
+
+            if ($len < $msgLen) {
+                trigger_error("failed to send data to Pinba server", E_USER_WARNING);
+            }
+
+            return $msgLen == $len;
+        }
+
+        return false;
     }
 
     /**

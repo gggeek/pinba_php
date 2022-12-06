@@ -17,12 +17,26 @@ class PinbaClient extends Pinba
 
     /**
      * @param string[] $servers
-     * @param int $flags
+     * @param int $flags Possible flags:
+     *                   PINBA_FLUSH_ONLY_STOPPED_TIMERS - flush only stopped timers
+     *                   PINBA_FLUSH_RESET_DATA - reset request data
+     *                   PINBA_AUTO_FLUSH - send data automatically when the object is destroyed
      */
     public function __construct($servers, $flags = 0)
     {
+        if (!$servers) {
+            // we log a warning. Native ext segfaults in this case
+            trigger_error("PinbaClient::__construct() expects parameter 1 to be a non empty array", E_USER_WARNING);
+        }
         $this->servers = $servers;
         $this->flags = $flags;
+    }
+
+    public function __destruct()
+    {
+        if ($this->flags & pinba::AUTO_FLUSH) {
+            $this->send();
+        }
     }
 
     public function setRequestCount($request_count)
@@ -57,32 +71,85 @@ class PinbaClient extends Pinba
 
     public function setRusage($rusage)
     {
+        if (count($rusage) !== 2) {
+            trigger_error("rusage array must contain exactly 2 elements", E_USER_WARNING);
+            return false;
+        }
+
         $this->rusage = $rusage;
         return true;
     }
 
     public function setTag($name, $value)
     {
-/// @todo
+        $this->tags[$name] = $value;
     }
 
     public function setTimer($tags, $value, $rusage = array(), $hit_count = null)
     {
-/// @todo
+        return $this->upsertTimer(false, $tags, $value, $rusage, $hit_count);
     }
 
     public function addTimer($tags, $value, $rusage = array(), $hit_count = null)
     {
-/// @todo
+        return $this->upsertTimer(true, $tags, $value, $rusage, $hit_count);
     }
 
-    public function send($flags = 0)
+    protected function upsertTimer($add, $tags, $value, $rusage = array(), $hit_count = null)
     {
-/// @todo
+        if (!is_array($tags)) {
+            trigger_error("setTimer() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
+            return false;
+        }
+        if (!self::verifyTags($tags))
+        {
+            return false;
+        }
+        if ($value < 0) {
+            trigger_error("negative time value passed ($value), changing it to 0", E_USER_WARNING);
+            $value = 0;
+        }
+
+        $tagsHash = $tags;
+        ksort($tagsHash);
+        $tagsHash = md5(var_export($tagsHash, true));
+
+        if ($add && isset($this->timers[$tagsHash])) {
+            // no need to update 'tags' or 'started'
+            $this->timers[$tagsHash]['value'] = $this->timers[$tagsHash]['value'] + $value;
+        } else {
+            $this->timers[$tagsHash] = array(
+                "value" => $value,
+                "tags" => $tags,
+                "started" => false
+            );
+        }
     }
 
-    public function getData($flags = 0)
+    /**
+     * @param null|int $flags - optional flags, bitmask. Override object flags if specified. NB: 0 != null
+     * @return void
+     */
+    public function send($flags = null)
     {
-/// @todo
+        $message = $this->getData($flags);
+        foreach($this->servers as $server) {
+            self::_send($server, $message);
+        }
+    }
+
+    /**
+     * Returns raw packet data. This is basically a copy of send(), but instead of sending it just returns the data.
+     * @param null|int $flags - optional flags, bitmask. Override object flags if specified. NB: 0 != null
+     * @return string
+     */
+    public function getData($flags = null)
+    {
+        if ($flags === null) {
+            $flags = $this->flags;
+        }
+        $info = $this->getInfo();
+/// @todo add support for flags - test ext. behaviour 1st
+        return $this->getPacket($info);
     }
 }

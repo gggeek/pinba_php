@@ -1,7 +1,12 @@
 vXX - unreleased
 
 * fixed default value for `$flag` argument of `pinba_timers_get`
+* fixed return value of `pinba_tag_delete`
+* fixed: when creating two or more timers with the same tag values, but tags in different order, they would not be merged
+* added: class `PinbaClient`
 * added method: `pinba_reset`
+* improved: added more sanity checks of function arguments values, closely matching the behaviour of the extension
+* improved test code coverage
 
 v0.2 - 5/12/2022
 

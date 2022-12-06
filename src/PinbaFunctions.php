@@ -12,6 +12,7 @@ namespace PinbaPhp\Polyfill;
 
 class PinbaFunctions extends Pinba
 {
+    /** @var Pinba $instance */
     protected static $instance;
     protected static $shutdown_registered = false;
 
@@ -20,7 +21,7 @@ class PinbaFunctions extends Pinba
      *
      * @param array $tags an array of tags and their values in the form of "tag" => "value". Cannot contain numeric indexes for obvious reasons.
      * @param array $data optional array with user data, not sent to the server.
-     * @return int Always returns new timer resource.
+     * @return int|false Always returns new timer resource, except on failure.
      *
      * @todo support $hit_count
      */
@@ -28,17 +29,20 @@ class PinbaFunctions extends Pinba
     {
         if (!is_array($tags)) {
             trigger_error("pinba_timer_start() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
-            return null;
-        }
-        foreach($tags as $key => $val) {
-            if (! is_string($key)) {
-                trigger_error(' pinba_timer_start(): tags can only have string names (i.e. tags array cannot contain numeric indexes)', E_USER_WARNING);
-                return null;
-            }
+            return false;
         }
         if ($data !== null && !is_array($data)) {
             trigger_error("pinba_timer_start() expects parameter 2 to be array, " . gettype($data) . " given", E_USER_WARNING);
-            return null;
+            return false;
+        }
+        if (!self::verifyTags($tags))
+        {
+            return false;
+        }
+        if ($hit_count < 0)
+        {
+            trigger_error("hit_count must be greater than 0 ($hit_count was passed)", E_USER_WARNING);
+            return false;
         }
 
         $i = self::instance();
@@ -73,6 +77,8 @@ class PinbaFunctions extends Pinba
                 $i->timers[$timer]["started"] = false;
                 $i->timers[$timer]["value"] = $time - $i->timers[$timer]["value"];
                 return true;
+            } else {
+                trigger_error("timer is already stopped", E_USER_WARNING);
             }
         }
         return false;
@@ -84,23 +90,25 @@ class PinbaFunctions extends Pinba
      * @param array $tags an array of tags and their values in the form of "tag" => "value". Cannot contain numeric indexes for obvious reasons.
      * @param int $value timer value for new timer.
      * @param array $data optional array with user data, not sent to the server.
-     * @return int Always returns new timer resource.
+     * @return int|false Always returns new timer resource, except on failure.
      */
     public static function timer_add($tags, $value, $data = null)
     {
         if (!is_array($tags)) {
             trigger_error("pinba_timer_add() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
-            return null;
-        }
-        foreach($tags as $key => $val) {
-            if (! is_string($key)) {
-                trigger_error(' pinba_timer_add(): tags can only have string names (i.e. tags array cannot contain numeric indexes)', E_USER_WARNING);
-                return null;
-            }
+            return false;
         }
         if ($data !== null && !is_array($data)) {
             trigger_error("pinba_timer_add() expects parameter 3 to be array, " . gettype($data) . " given", E_USER_WARNING);
-            return null;
+            return false;
+        }
+        if (!self::verifyTags($tags))
+        {
+            return false;
+        }
+        if ($value < 0) {
+            trigger_error("negative time value passed ($value), changing it to 0", E_USER_WARNING);
+            $value = 0;
         }
 
         $i = self::instance();
@@ -162,12 +170,19 @@ class PinbaFunctions extends Pinba
     {
         /// @todo should we check for type of $tags?
 
+        // NB: strangely enough, the extension returns true if the tags array is empty...
+        if (!self::verifyTags($tags)) {
+            return false;
+        }
+
         $i = self::instance();
         if (isset($i->timers[$timer]))
         {
             $i->timers[$timer]["tags"] = $tags;
             return true;
         }
+
+        /// @todo log warning
         return false;
     }
 
@@ -229,7 +244,7 @@ class PinbaFunctions extends Pinba
     public static function timer_get_info($timer)
     {
         $time = microtime(true);
-        return self::instance()->_timer_get_info($timer, $time);
+        return self::instance()->getTimerInfo($timer, $time);
     }
 
     /**
@@ -240,7 +255,6 @@ class PinbaFunctions extends Pinba
     public static function timers_stop()
     {
         $time = microtime(true);
-/// @todo check: does this work as intended?
         foreach (self::instance()->timers as &$timer)
         {
             if ($timer["started"])
@@ -264,8 +278,8 @@ class PinbaFunctions extends Pinba
         $out = array();
         $i = self::instance();
         foreach($i->timers as $id => $timer) {
-            if (!($flag & self::PINBA_ONLY_STOPPED_TIMERS) || $timer['started'] === false) {
-                $out[] = $i->_timer_get_info($id, $time);
+            if (!($flag & self::ONLY_STOPPED_TIMERS) || $timer['started'] === false) {
+                $out[] = $i->getTimerInfo($id, $time);
             }
         }
         return $out;
@@ -301,7 +315,7 @@ class PinbaFunctions extends Pinba
      */
     public static function get_info()
     {
-        return self::instance()->_get_info();
+        return self::instance()->getInfo();
     }
 
     /**
@@ -356,6 +370,12 @@ class PinbaFunctions extends Pinba
      */
     public static function tag_set($tag, $value)
     {
+        /// @todo abort on non-string $value?
+
+        if ($value === "") {
+            trigger_error("tag name cannot be empty", E_USER_WARNING);
+            return false;
+        }
         self::instance()->tags[$tag] = $value;
         return true;
     }
@@ -380,6 +400,7 @@ class PinbaFunctions extends Pinba
         if (array_key_exists($tag, self::instance()->tags))
         {
             unset(self::instance()->tags[$tag]);
+            return true;
         }
         return false;
     }
@@ -409,58 +430,41 @@ class PinbaFunctions extends Pinba
      *
      * @param string $script_name
      * @param int $flags Possible values (it's a bitmask, so you can add the constants):
-     *                   PINBA_FLUSH_ONLY_STOPPED_TIMERS - flush only stopped timers (by default all existing timers are stopped and flushed)
-     *                   PINBA_FLUSH_RESET_DATA - reset common request
+     *                   FLUSH_ONLY_STOPPED_TIMERS - flush only stopped timers (by default all existing timers are stopped and flushed)
+     *                   FLUSH_RESET_DATA - reset common request
+     *                   NB: we stop timers even if the socket can not be opened. But not if 'pinba.enabled' is false
      * @return bool false if extension is disabled, or if there are network issues
-     *
-     * @todo add IPv6 support for `pinba.server` (see http://pinba.org/wiki/Manual:PHP_extension)
      */
     public static function flush($script_name = null, $flags = 0)
     {
         if (self::ini_get('pinba.enabled'))
         {
-            $server = self::ini_get('pinba.server');
-            $port = 30002;
-            if (count($parts = explode(':', $server)) > 1)
-            {
-                (int)$port = $parts[1];
-                $server = $parts[0];
+            $i = self::instance();
+
+            /// q:should we stop timers even if the socket can not be opened?
+            if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
+                self::timers_stop();
             }
-
-            /// @todo should we log a more specific warning in case of failures to open the udp socket? f.e. the pinba
-            ///       extension on invalid hostname triggers:
-            ///       PHP Warning:  Unknown: failed to resolve Pinba server hostname 'xxx': Name or service not known in Unknown on line 0
-            $fp = fsockopen("udp://$server", $port, $errno, $errstr);
-            if ($fp)
-            {
-                $i = self::instance();
-
-                /// q:should we stop timers even if the socket can not be opened?
-                if (!($flags & PINBA_FLUSH_ONLY_STOPPED_TIMERS)) {
-                    self::timers_stop();
-                }
-                $info = $i->_get_info();
-                if ($flags & PINBA_FLUSH_ONLY_STOPPED_TIMERS) {
-                    foreach($info['timers'] as $id => $timer) {
-                        if ($timer['started']) {
-                            unset($info['timers'][$id]);
-                        }
+            $info = $i->getInfo();
+            if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
+                foreach($info['timers'] as $id => $timer) {
+                    if ($timer['started']) {
+                        unset($info['timers'][$id]);
                     }
                 }
-
-                $struct = $i->getPacketInfo($info, $script_name);
-                $message = Prtbfr::encode($struct, self::$message_proto);
-
-                $msgLen = strlen($message);
-                $len = fwrite($fp, $message, $msgLen);
-                fclose($fp);
-
-                if ($flags & self::PINBA_FLUSH_RESET_DATA) {
-                    self::reset();
-                }
-
-                return $msgLen == $len;
             }
+            if ($script_name != null)
+            {
+                $info["script_name"] = $script_name;
+            }
+
+            $ok = self::_send(self::ini_get('pinba.server'), $i->getPacket($info));
+
+            if ($flags & self::FLUSH_RESET_DATA) {
+                self::reset();
+            }
+
+            return $ok;
         }
 
         return false;
@@ -487,12 +491,12 @@ class PinbaFunctions extends Pinba
 
     /**
      * Make this class a singleton: factory
-     * @return PinbaFunctions we can not instantiate a Pinba object, as it has been declared abstract
+     * @return Pinba we can not instantiate a Pinba object, as it has been declared abstract
      */
     protected static function instance()
     {
         if (self::$instance == null) {
-            self::$instance = new self();
+            self::$instance = new Pinba();
         }
         return self::$instance;
     }

@@ -110,7 +110,7 @@ class FlushTest extends TestCase
     function testFlushOnlyStoppedTimers()
     {
         $t1 = pinba::timer_start(array('tag1' => 'testFlush'));
-        pinba::flush(null, pinba::PINBA_FLUSH_ONLY_STOPPED_TIMERS);
+        pinba::flush(null, pinba::FLUSH_ONLY_STOPPED_TIMERS);
 
         $v = pinba::timer_get_info($t1);
         $this->assertEquals(true, $v['started'], 'timer should not have been stopped by flush call');

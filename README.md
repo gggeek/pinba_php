@@ -40,14 +40,13 @@ We strive to implement the same API as Pinba extension ver. 1.1.2.
 As for the server side, the library is tested for compatibility against both a Pinba server and a Pinba2 one.
 
 Features not (yet) supported:
-- class `PinbaClient`
 - ini settings `pinba.auto_flush` and `pinba.resolve_interval`
 - 3rd argument `$hit_count` in function `pinba_timer_start` is accepted but not used
-- in the data reported by `pinba_get_info` and reported to the Pinba server, the following information has always a value
-  of 0: `doc_size`
+- in the data reported by `pinba_get_info` and reported to the Pinba server, `doc_size` has always a value of 0. This
+  can be worked around by using an instance of `PinbaClient` and calling `setDocumentSize`
 - in the data reported to the Pinba server, the following information has always a fixed value or is not reported at all:
-  `status`, `memory_footprint`, `requests`
-- Timers data misses `ru_utime` and `ru_stime` members
+  `status`, `memory_footprint`, `requests`. Again, using a `PinbaClient` instance can fix that
+- Timers data misses `ru_utime` and `ru_stime` members. This is true also for timers added to `PinbaClient` instances
 
 Known issues - which cannot be fixed:
 - lack in precision in time reporting: the time reported for page execution will be much shorter with any php code than
@@ -57,7 +56,8 @@ Known issues - which cannot be fixed:
 - impact on system performances: the cpu time and ram used by this implementation (which runs on every page of your site!)
   are also bigger than the resources used by the php extension. It is up to you to decide if the extra load added to
   your server by using this package is worth it or not, esp. for heavily loaded production servers
-
+- the warnings raised when incorrect data is passed to the pinba php functions are of severity E_USER_WARNING instead of
+  E_WARNING
 
 ## Notes
 

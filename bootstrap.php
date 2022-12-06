@@ -330,23 +330,23 @@ if (!function_exists('pinba_flush')) {
 }
 
 if (!defined('PINBA_FLUSH_ONLY_STOPPED_TIMERS')) {
-    define('PINBA_FLUSH_ONLY_STOPPED_TIMERS', Pinba::PINBA_FLUSH_ONLY_STOPPED_TIMERS);
+    define('PINBA_FLUSH_ONLY_STOPPED_TIMERS', Pinba::FLUSH_ONLY_STOPPED_TIMERS);
 }
 
 if (!defined('PINBA_FLUSH_RESET_DATA')) {
-    define('PINBA_FLUSH_RESET_DATA', Pinba::PINBA_FLUSH_RESET_DATA);
+    define('PINBA_FLUSH_RESET_DATA', Pinba::FLUSH_RESET_DATA);
 }
 
 if (!defined('PINBA_ONLY_RUNNING_TIMERS')) {
-    define('PINBA_ONLY_RUNNING_TIMERS', Pinba::PINBA_ONLY_RUNNING_TIMERS);
+    define('PINBA_ONLY_RUNNING_TIMERS', Pinba::ONLY_RUNNING_TIMERS);
 }
 
 if (!defined('PINBA_AUTO_FLUSH')) {
-    define('PINBA_AUTO_FLUSH', Pinba::PINBA_AUTO_FLUSH);
+    define('PINBA_AUTO_FLUSH', Pinba::AUTO_FLUSH);
 }
 
 if (!defined('PINBA_ONLY_STOPPED_TIMERS')) {
-    define('PINBA_ONLY_STOPPED_TIMERS', Pinba::PINBA_ONLY_STOPPED_TIMERS);
+    define('PINBA_ONLY_STOPPED_TIMERS', Pinba::ONLY_STOPPED_TIMERS);
 }
 
 if (!class_exists('PinbaClient')) {
