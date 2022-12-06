@@ -1,22 +1,21 @@
 #!/usr/bin/env bash
 
-# @todo runtests -o should generate html coverage, not xml
-# @todo reimplement resetdb
-# @todo simplify/verify cli options
-
 # Manage the whole set of containers and run tests without having to learn Docker
 
+# @todo when running test w. codecov, enable xdebug on the fly
+# @todo simplify/verify cli options, esp. -d and -f
+# @todo reimplement resetdb (is it useful? pinba tables are read-only anyway...)
+
 # vars
-WEB_USER=docker
 DOCKER_COMPOSE=docker-compose
 INTERACTIVE=
-PARALLEL_BUILD=
 REBUILD=false
 RECREATE=false
 COVERAGE_OPTION=
 SILENT=false
 TTY=
 VERBOSITY=
+WEB_USER=docker
 WEB_CONTAINER=${COMPOSE_PROJECT_NAME:-pinbapolyfill}-php
 
 help() {
@@ -38,7 +37,7 @@ Commands:
     logs [\$svc]       view output from containers
     pause [\$svc]      pause the containers
     ps [\$svc]         show the status of running containers
-    runtests [\$suite] execute the test suite using the test container (or a single test scenario eg. Tests/phpunit/05_TagsTest.php)
+    runtests [\$suite] execute the test suite using the test container (or a single test scenario eg. Tests/phpunit/01GatherTest.php)
     services          list docker-compose services
     start [\$svc]      start the complete set of containers
     stop [\$svc]       stop the complete set of containers
@@ -53,7 +52,7 @@ Advanced Options:
     -d                discard existing containers and force them to rebuild from scratch - when running 'build'
     -f                freshen: force app set up via resetting containers to clean-build status besides updating them if needed - when running 'build', 'start'
     -i                interactive - when running 'exec'
-    -o PROVIDER       generate and upload code coverage data - when running 'runtests'. Providers: codecov, scrutinizer
+    -o FOLDER         generate code coverage reports in FOLDER - when running 'runtests'. Needs xdebug to be enabled in code-coverage mode
     -t                allocate a pseudo-TTY - when running 'exec'
 
 Env vars: TESTSTACK_UBUNTU_VERSION (focal), TESTSTACK_PHP_VERSION (default), TESTSTACK_WEB_PORT (80)
@@ -77,7 +76,7 @@ build() {
 
     echo "[$(date)] Building Containers..."
 
-    ${DOCKER_COMPOSE} build ${PARALLEL_BUILD} || exit $?
+    ${DOCKER_COMPOSE} build || exit $?
 
     echo "[$(date)] Starting Containers..."
 
@@ -185,7 +184,7 @@ do
             INTERACTIVE='-i'
         ;;
         o)
-            COVERAGE_OPTION="--coverage-clover=coverage.clover"
+            COVERAGE_OPTION="--coverage-html=${OPTARG}"
         ;;
         t)
             TTY='-t'
@@ -264,11 +263,11 @@ case "${COMMAND}" in
         ${DOCKER_COMPOSE} ps ${2}
     ;;
 
-    resetdb)
-        # @todo allow this to be run from within the test container too
-        # q: do we need -ti ?
-        ##docker exec "${WEB_CONTAINER}" su "${WEB_USER}" -c "../teststack/bin/create-db.sh"
-    ;;
+    #resetdb)
+    #    # @todo allow this to be run from within the test container too
+    #    # q: do we need -ti ?
+    #    docker exec "${WEB_CONTAINER}" su "${WEB_USER}" -c "../teststack/bin/create-db.sh"
+    #;;
 
     runtests)
         shift
