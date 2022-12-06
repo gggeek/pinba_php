@@ -422,35 +422,35 @@ class PinbaFunctions extends Pinba
      */
     public static function flush($script_name = null, $flags = 0)
     {
-        if (self::ini_get('pinba.enabled')) {
-            $i = self::instance();
-
-            if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
-                $i->stopTimers(microtime(true));
-            }
-            $info = $i->getInfo(false);
-            if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
-                foreach($info['timers'] as $id => $timer) {
-                    if ($timer['started']) {
-                        unset($info['timers'][$id]);
-                    }
-                }
-            }
-
-            if ($script_name != null) {
-                $info["script_name"] = $script_name;
-            }
-
-            $ok = self::_send(self::ini_get('pinba.server'), $i->getPacket($info));
-
-            if ($flags & self::FLUSH_RESET_DATA) {
-                self::reset();
-            }
-
-            return $ok;
+        if (!self::ini_get('pinba.enabled')) {
+            return false;
         }
 
-        return false;
+        $i = self::instance();
+
+        if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
+            $i->stopTimers(microtime(true));
+        }
+        $info = $i->getInfo(false);
+        if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
+            foreach($info['timers'] as $id => $timer) {
+                if ($timer['started']) {
+                    unset($info['timers'][$id]);
+                }
+            }
+        }
+
+        if ($script_name != null) {
+            $info["script_name"] = $script_name;
+        }
+
+        $ok = self::_send(self::ini_get('pinba.server'), $i->getPacket($info));
+
+        if ($flags & self::FLUSH_RESET_DATA) {
+            self::reset();
+        }
+
+        return $ok;
     }
 
     public static function reset()
