@@ -35,12 +35,10 @@ class PinbaFunctions extends Pinba
             trigger_error("pinba_timer_start() expects parameter 2 to be array, " . gettype($data) . " given", E_USER_WARNING);
             return false;
         }
-        if (!self::verifyTags($tags))
-        {
+        if (!self::verifyTags($tags)) {
             return false;
         }
-        if ($hit_count < 0)
-        {
+        if ($hit_count < 0) {
             trigger_error("hit_count must be greater than 0 ($hit_count was passed)", E_USER_WARNING);
             return false;
         }
@@ -70,10 +68,8 @@ class PinbaFunctions extends Pinba
         }
         $time = microtime(true);
         $i = self::instance();
-        if (isset($i->timers[$timer]))
-        {
-            if ($i->timers[$timer]["started"])
-            {
+        if (isset($i->timers[$timer])) {
+            if ($i->timers[$timer]["started"]) {
                 $i->timers[$timer]["started"] = false;
                 $i->timers[$timer]["value"] = $time - $i->timers[$timer]["value"];
                 return true;
@@ -102,8 +98,7 @@ class PinbaFunctions extends Pinba
             trigger_error("pinba_timer_add() expects parameter 3 to be array, " . gettype($data) . " given", E_USER_WARNING);
             return false;
         }
-        if (!self::verifyTags($tags))
-        {
+        if (!self::verifyTags($tags)) {
             return false;
         }
         if ($value < 0) {
@@ -131,8 +126,7 @@ class PinbaFunctions extends Pinba
     public static function timer_delete($timer)
     {
         $i = self::instance();
-        if (isset($i->timers[$timer]))
-        {
+        if (isset($i->timers[$timer])) {
             unset($i->timers[$timer]);
             return true;
         }
@@ -151,8 +145,7 @@ class PinbaFunctions extends Pinba
         /// @todo should we check for type of $tags?
 
         $i = self::instance();
-        if (isset($i->timers[$timer]))
-        {
+        if (isset($i->timers[$timer])) {
             $i->timers[$timer]["tags"] = array_merge($i->timers[$timer]["tags"], $tags);
             return true;
         }
@@ -176,8 +169,7 @@ class PinbaFunctions extends Pinba
         }
 
         $i = self::instance();
-        if (isset($i->timers[$timer]))
-        {
+        if (isset($i->timers[$timer])) {
             $i->timers[$timer]["tags"] = $tags;
             return true;
         }
@@ -198,8 +190,7 @@ class PinbaFunctions extends Pinba
         /// @todo should we check for type of $data?
 
         $i = self::instance();
-        if (isset($i->timers[$timer]))
-        {
+        if (isset($i->timers[$timer])) {
             $i->timers[$timer]["data"] = array_merge($i->timers[$timer]["data"], $data);
             return true;
         }
@@ -219,8 +210,7 @@ class PinbaFunctions extends Pinba
         /// @todo should we check for type of $data?
 
         $i = self::instance();
-        if (isset($i->timers[$timer]))
-        {
+        if (isset($i->timers[$timer])) {
             $i->timers[$timer]["data"] = $data;
             return true;
         }
@@ -392,8 +382,7 @@ class PinbaFunctions extends Pinba
      */
     public static function tag_delete($tag)
     {
-        if (array_key_exists($tag, self::instance()->tags))
-        {
+        if (array_key_exists($tag, self::instance()->tags)) {
             unset(self::instance()->tags[$tag]);
             return true;
         }
@@ -432,8 +421,7 @@ class PinbaFunctions extends Pinba
      */
     public static function flush($script_name = null, $flags = 0)
     {
-        if (self::ini_get('pinba.enabled'))
-        {
+        if (self::ini_get('pinba.enabled')) {
             $i = self::instance();
 
             if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
@@ -448,8 +436,7 @@ class PinbaFunctions extends Pinba
                 }
             }
 
-            if ($script_name != null)
-            {
+            if ($script_name != null) {
                 $info["script_name"] = $script_name;
             }
 
@@ -513,16 +500,14 @@ class PinbaFunctions extends Pinba
     public static function init($time=null)
     {
         $i = self::instance();
-        if ($i->request_time == null || $time != null)
-        {
+        if ($i->request_time == null || $time != null) {
             if ($time == null)
             {
                 $time = microtime(true);
             }
             $i->setRequestTime($time);
         }
-        if (!self::$shutdown_registered)
-        {
+        if (!self::$shutdown_registered) {
             self::$shutdown_registered = true;
             register_shutdown_function('PinbaPhp\Polyfill\PinbaFunctions::autoFlush');
         }
