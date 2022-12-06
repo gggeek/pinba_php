@@ -57,16 +57,23 @@ class FlushTest extends TestCase
     public function setTestUp()
     {
         /// @todo delete all existing timers and pinba data in mysql (is that possible at all?)
+        pinba::reset();
 
-        // generate a unique id for the test to use in flush()
+        // generate a unique id for the test, transparently used in flush() calls
         $this->id = uniqid();
         pinba::script_name_set($this->id);
     }
 
     function testFlush()
     {
+        $t1 = pinba::timer_start(array('tag1' => 'testFlush'));
         pinba::flush();
+
+        $v = pinba::timer_get_info($t1);
+        $this->assertEquals(false, $v['started'], 'timer should have been stopped by flush call');
+
         $v = pinba::get_info();
+
         sleep(2); // we can not reduce it, as we have to wait for rollup into the reports tables
 
         if (self::$pinba1) {
@@ -75,7 +82,7 @@ class FlushTest extends TestCase
             $this->assertEquals(1, count($r), 'no data found in the db for a flush call');
             $r = $r[0];
             $this->assertEquals($v['hostname'], $r['hostname'], 'hostname data was not sent correctly to the db');
-            $this->assertEquals($v['req_count'], $r['req_count'], 'script_name data was not sent correctly to the db');
+            $this->assertEquals($v['req_count'], $r['req_count'], 'req_count data was not sent correctly to the db');
             $this->assertEquals($v['server_name'], $r['server_name'], 'server_name data was not sent correctly to the db');
             $this->assertEquals($v['script_name'], $r['script_name'], 'script_name data was not sent correctly to the db');
             $this->assertEquals($v['doc_size'], (int)$r['doc_size'], 'doc_size data was not sent correctly to the db');
@@ -98,5 +105,14 @@ class FlushTest extends TestCase
         }
         $r = self::$db->query("SELECT * FROM report_by_script_name WHERE $col='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
         $this->assertEquals(1, count($r), 'no aggregate data found in the db for a flush call');
+    }
+
+    function testFlushOnlyStoppedTimers()
+    {
+        $t1 = pinba::timer_start(array('tag1' => 'testFlush'));
+        pinba::flush(null, pinba::PINBA_FLUSH_ONLY_STOPPED_TIMERS);
+
+        $v = pinba::timer_get_info($t1);
+        $this->assertEquals(true, $v['started'], 'timer should not have been stopped by flush call');
     }
 }

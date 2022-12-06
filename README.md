@@ -42,7 +42,6 @@ As for the server side, the library is tested for compatibility against both a P
 Features not (yet) supported:
 - class `PinbaClient`
 - ini settings `pinba.auto_flush` and `pinba.resolve_interval`
-- method `pinba_reset`
 - 3rd argument `$hit_count` in function `pinba_timer_start` is accepted but not used
 - in the data reported by `pinba_get_info` and reported to the Pinba server, the following information has always a value
   of 0: `doc_size`

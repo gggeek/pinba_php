@@ -10,7 +10,8 @@ class GatherTest extends TestCase
      */
     public function setTestUp()
     {
-        /// @todo delete all existing timers
+        // delete all existing timers and tags
+        pinba::reset();
     }
 
     function testGetInfo()
@@ -89,10 +90,10 @@ class GatherTest extends TestCase
         $v = pinba::timer_get_info(-1);
     }
 
-    function testTagDelete()
+    function testTimerDelete()
     {
         pinba::reset();
-        $t = pinba::timer_start(array('tag1' => 'x'));
+        $t = pinba::timer_start(array('tag1' => 'testTimerDelete'));
         $r = pinba::timer_delete($t);
         $this->assertEquals(true, $r, 'the timer should have been deleted');
         $timers = pinba::timers_get();
@@ -104,8 +105,8 @@ class GatherTest extends TestCase
     function testGetTimers()
     {
         pinba::reset();
-        $t1 = pinba::timer_start(array('tag1' => 'a'));
-        $t2 = pinba::timer_start(array('tag1' => 'b'));
+        $t1 = pinba::timer_start(array('tag1' => 'testGetTimers_1'));
+        $t2 = pinba::timer_start(array('tag1' => 'testGetTimers_2'));
         pinba::timer_stop($t1);
         $timers = pinba::timers_get();
         $this->assertEquals(2, count($timers), 'there should be 2 timers');

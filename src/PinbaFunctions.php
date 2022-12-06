@@ -1,8 +1,9 @@
 <?php
 /**
- * A class implementing the pinba extension functionality, in pure php
+ * A class implementing the pinba extension functionality, in pure php - function API
  *
  * @see http://pinba.org/wiki/Manual:PHP_extension
+ * @see https://github.com/tony2001/pinba_engine/wiki/PHP-extension#functions
  * @author G. Giunta
  * @copyright (C) G. Giunta 2011 - 2022
  */
@@ -25,8 +26,6 @@ class PinbaFunctions extends Pinba
      */
     public static function timer_start($tags, $data = null, $hit_count = 1)
     {
-        $time = microtime(true);
-
         if (!is_array($tags)) {
             trigger_error("pinba_timer_start() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
             return null;
@@ -45,7 +44,7 @@ class PinbaFunctions extends Pinba
         $i = self::instance();
         $timer = count($i->timers);
         $i->timers[$timer] = array(
-            "value" => $time,
+            "value" => microtime(true),
             "tags" => $tags,
             "started" => true,
             "data" => $data
@@ -233,23 +232,6 @@ class PinbaFunctions extends Pinba
         return self::instance()->_timer_get_info($timer, $time);
     }
 
-    protected function _timer_get_info($timer, $time)
-    {
-        if (isset($this->timers[$timer]))
-        {
-            $timer = $this->timers[$timer];
-            if ($timer["started"])
-            {
-                $timer["value"] = $time - $timer["value"];
-            }
-            /// @todo should we round the timer value?
-            return $timer;
-        }
-
-        trigger_error("pinba_timer_get_info(): supplied resource is not a valid pinba timer resource", E_USER_WARNING);
-        return false;
-    }
-
     /**
      * Stops all running timers.
      *
@@ -258,7 +240,7 @@ class PinbaFunctions extends Pinba
     public static function timers_stop()
     {
         $time = microtime(true);
-/// @todo check
+/// @todo check: does this work as intended?
         foreach (self::instance()->timers as &$timer)
         {
             if ($timer["started"])
@@ -319,62 +301,7 @@ class PinbaFunctions extends Pinba
      */
     public static function get_info()
     {
-        $i = self::instance();
-        if ($i->hostname === null)
-        {
-            if (php_sapi_name() == 'cli')
-            {
-                $i->hostname = 'php';
-            }
-            else
-            {
-                $i->hostname = gethostname();
-            }
-        }
-        if ($i->script_name === null && isset($_SERVER['SCRIPT_NAME']))
-        {
-            $i->script_name = $_SERVER['SCRIPT_NAME'];
-        }
-        if ($i->server_name === null && isset($_SERVER['SERVER_NAME']))
-        {
-            $i->server_name = $_SERVER['SERVER_NAME'];
-        }
-
-        /// @todo can we push timing measurement further close to end of execution?
-
-        $time = microtime(true);
-        $timers = array();
-        foreach($i->timers as $id => $t)
-        {
-            $timers[] = $i->_timer_get_info($id, $time);
-        }
-
-        $ruUtime = 0;
-        $ruStime = 0;
-        if (function_exists('getrusage')) {
-            $rUsage = getrusage();
-            if (isset($rUsage['ru_utime.tv_usec'])) {
-                $ruUtime = $rUsage['ru_utime.tv_usec'] / 1000000;
-            }
-            if (isset($rUsage['ru_utime.tv_usec'])) {
-                $ruStime = $rUsage['ru_stime.tv_usec'] / 1000000;
-            }
-        }
-
-        return array(
-            'mem_peak_usage' => memory_get_peak_usage(true),
-            'req_time' => $time - $i->request_time,
-            'ru_utime' => $ruUtime,
-            'ru_stime' => $ruStime,
-            'req_count' => 1, /// @todo should we default to 0 ?
-            'doc_size' => 0,
-            'schema' => $i->schema,
-            'server_name' => ($i->server_name != null ? $i->server_name : 'unknown'),
-            'script_name' => ($i->script_name != null ? $i->script_name : 'unknown'),
-            'hostname' => ($i->hostname != null ? $i->hostname : 'unknown'),
-            'timers' => $timers,
-            'tags' => $i->tags
-        );
+        return self::instance()->_get_info();
     }
 
     /**
@@ -385,8 +312,7 @@ class PinbaFunctions extends Pinba
      */
     public static function schema_set($schema)
     {
-        self::instance()->schema = $schema;
-        return true;
+        return self::instance()->setSchema($schema);
     }
 
     /**
@@ -398,8 +324,7 @@ class PinbaFunctions extends Pinba
      */
     public static function script_name_set($script_name)
     {
-        self::instance()->script_name = $script_name;
-        return true;
+        return self::instance()->setScriptname($script_name);
     }
 
     /**
@@ -410,8 +335,7 @@ class PinbaFunctions extends Pinba
      */
     public static function server_name_set($server_name)
     {
-        self::instance()->server_name = $server_name;
-        return true;
+        return self::instance()->setServername($server_name);
     }
 
     /**
@@ -422,8 +346,7 @@ class PinbaFunctions extends Pinba
      */
     public static function request_time_set($request_time)
     {
-        self::instance()->request_time = $request_time;
-        return true;
+        return self::instance()->setRequestTime($request_time);
     }
 
     /**
@@ -477,8 +400,7 @@ class PinbaFunctions extends Pinba
      */
     public static function hostname_set($hostname)
     {
-        self::instance()->hostname = $hostname;
-        return true;
+        return self::instance()->setHostname($hostname);
     }
 
     /**
@@ -512,7 +434,21 @@ class PinbaFunctions extends Pinba
             if ($fp)
             {
                 $i = self::instance();
-                $struct = $i->get_packet_info($script_name, $flags);
+
+                /// q:should we stop timers even if the socket can not be opened?
+                if (!($flags & PINBA_FLUSH_ONLY_STOPPED_TIMERS)) {
+                    self::timers_stop();
+                }
+                $info = $i->_get_info();
+                if ($flags & PINBA_FLUSH_ONLY_STOPPED_TIMERS) {
+                    foreach($info['timers'] as $id => $timer) {
+                        if ($timer['started']) {
+                            unset($info['timers'][$id]);
+                        }
+                    }
+                }
+
+                $struct = $i->getPacketInfo($info, $script_name);
                 $message = Prtbfr::encode($struct, self::$message_proto);
 
                 $msgLen = strlen($message);
@@ -530,142 +466,28 @@ class PinbaFunctions extends Pinba
         return false;
     }
 
-    /**
-     * Builds the php array structure to be sent to the pinba server.
-     * NB: depending on the value of $flags, it will stop all running timers
-     */
-    protected function get_packet_info($script_name = null, $flags = 0)
-    {
-        $struct = static::get_info();
-
-        // massage info into correct format for pinba server
-
-        $struct["hostname"] = $this->hostname;
-        if ($script_name != null)
-        {
-            $struct["script_name"] = $script_name;
-        }
-        foreach(array(
-            "mem_peak_usage" => "memory_peak",
-            "req_time" => "request_time",
-            "req_count" => "request_count",
-            "doc_size" => "document_size") as $old => $new)
-        {
-            $struct[$new] = $struct[$old];
-        }
-        if (!($flags & self::PINBA_FLUSH_ONLY_STOPPED_TIMERS)) {
-            $time = microtime(true);
-        }
-        // merge timers by tags
-        $tags = array();
-        foreach($struct["timers"] as $id => $timer)
-        {
-            if ($flags & self::PINBA_FLUSH_ONLY_STOPPED_TIMERS) {
-                if ($timer['started']) {
-                    unset($struct["timers"][$id]);
-                    continue;
-                }
-            } else {
-                // stop all running timers
-/// @todo what if this is called _not_ on the global instance ? reset that one instead
-                if ($timer['started']) {
-                    $this->timers[$id]["started"] = false;
-                    $this->timers[$id]["value"] = $time - $this->timers[$timer]["value"];
-                }
-            }
-
-            $tag = md5(var_export($timer["tags"], true));
-            if (isset($tags[$tag]))
-            {
-                $struct["timers"][$tags[$tag]]["value"] = $struct["timers"][$tags[$tag]]["value"] + $timer["value"];
-                $struct["timers"][$tags[$tag]]["count"] = $struct["timers"][$tags[$tag]]["count"] + 1;
-                unset($struct["timers"][$id]);
-            }
-            else
-            {
-                $tags[$tag] = $id;
-                $struct["timers"][$id]["count"] = 1;
-            }
-        }
-        // build tag dictionary and index timer tags
-        $dict = array();
-        foreach($struct["timers"] as $id => $timer)
-        {
-            foreach($timer['tags'] as $tag => $value)
-            {
-                if (($tagid = array_search($tag, $dict)) === false)
-                {
-                    $tagid = count($dict);
-                    $dict[] = $tag;
-                }
-                if (($valueid = array_search($value, $dict)) === false)
-                {
-                    $valueid = count($dict);
-                    $dict[] = $value;
-                }
-                $struct["timers"][$id]['tagids'][$tagid] = $valueid;
-            }
-        }
-        $struct["timer_hit_count"] = array();
-        $struct["timer_value"] = array();
-        $struct["timer_tag_count"] = array();
-        $struct["timer_tag_name"] = array();
-        $struct["timer_tag_value"] = array();
-        foreach($struct["timers"] as $timer)
-        {
-            $struct["timer_hit_count"][] = $timer["count"];
-            $struct["timer_value"][] = $timer["value"];
-            $struct["timer_tag_count"][] = count($timer["tags"]);
-            foreach($timer["tagids"] as $key => $val)
-            {
-                $struct["timer_tag_name"][] = $key;
-                $struct["timer_tag_value"][] = $val;
-            }
-        }
-        $struct["dictionary"] = array();
-        foreach($dict as $tag)
-        {
-            $struct["dictionary"][] = $tag;
-        }
-
-        /// @todo implement the following missing fields
-
-        $struct["status"] = 0; /// @todo
-        // $struct["memory_footprint"] = ...;
-        $struct["requests"] = array(); /// @todo
-
-        $struct["tag_name"] = array();
-        $struct["tag_value"] = array();
-        foreach($struct["tags"] as $name => $value) {
-            $struct["tag_name"][] = $name;
-            $struct["tag_value"][] = $value;
-        }
-
-        $struct["timer_ru_utime"] = array(); /// @todo
-        $struct["timer_ru_stime"] = array(); /// @todo
-
-        return $struct;
-    }
-
     public static function reset()
     {
         $i = self::instance();
         $i->timers = array();
         $i->tags = array();
         $i->request_time = microtime(true);
-        /// @todo the C code resets as well doc_size, mem_peak_usage, req_count, ru_*,
+        $i->document_size = null;
+        $i->memory_peak = null;
+        $i->request_count = 1;
+        $i->rusage = array();
     }
 
     // *** End of Pinba API ***
 
-    /// make this class a singleton: private constructor
+    /// Make this class a singleton: private constructor
     protected function __construct()
     {
     }
 
     /**
      * Make this class a singleton: factory
-     * @return PinbaFunctions
+     * @return PinbaFunctions we can not instantiate a Pinba object, as it has been declared abstract
      */
     protected static function instance()
     {
@@ -676,7 +498,8 @@ class PinbaFunctions extends Pinba
     }
 
     /**
-     * A function not in the pinba extension api, needed to calculate total req. time.
+     * A function not in the pinba extension api, needed to calculate total req. time and to insure we flush at end of
+     * script execution. To be called as close as possible to the beginning of the main script.
      */
     public static function init($time=null)
     {
@@ -687,7 +510,7 @@ class PinbaFunctions extends Pinba
             {
                 $time = microtime(true);
             }
-            $i->request_time = $time;
+            $i->setRequestTime($time);
         }
         if (!self::$shutdown_registered)
         {

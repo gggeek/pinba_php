@@ -1,6 +1,7 @@
 vXX - unreleased
 
 * fixed default value for `$flag` argument of `pinba_timers_get`
+* added method: `pinba_reset`
 
 v0.2 - 5/12/2022
 

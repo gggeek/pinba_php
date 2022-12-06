@@ -348,3 +348,7 @@ if (!defined('PINBA_AUTO_FLUSH')) {
 if (!defined('PINBA_ONLY_STOPPED_TIMERS')) {
     define('PINBA_ONLY_STOPPED_TIMERS', Pinba::PINBA_ONLY_STOPPED_TIMERS);
 }
+
+if (!class_exists('PinbaClient')) {
+    class_alias('PinbaPhp\Polyfill\PinbaClient', 'PinbaClient');
+}
