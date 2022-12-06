@@ -38,7 +38,7 @@ class PinbaFunctions extends Pinba
         if (!self::verifyTags($tags)) {
             return false;
         }
-        if ($hit_count < 0) {
+        if ($hit_count <= 0) {
             trigger_error("hit_count must be greater than 0 ($hit_count was passed)", E_USER_WARNING);
             return false;
         }
@@ -49,7 +49,8 @@ class PinbaFunctions extends Pinba
             "value" => microtime(true),
             "tags" => $tags,
             "started" => true,
-            "data" => $data
+            "data" => $data,
+            "hit_count" => $hit_count
         );
         return $timer;
     }
@@ -427,7 +428,7 @@ class PinbaFunctions extends Pinba
             if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
                 $i->stopTimers(microtime(true));
             }
-            $info = $i->getInfo();
+            $info = $i->getInfo(false);
             if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
                 foreach($info['timers'] as $id => $timer) {
                     if ($timer['started']) {

@@ -102,12 +102,15 @@ class Pinba
         return true;
     }
 
-    protected function getTimerInfo($timer, $time)
+    protected function getTimerInfo($timer, $time, $removeHitCount = true)
     {
         if (isset($this->timers[$timer])) {
             $timer = $this->timers[$timer];
             if ($timer["started"]) {
                 $timer["value"] = $time - $timer["value"];
+            }
+            if ($removeHitCount && isset($timer['hit_count'])) {
+                unset($timer['hit_count']);
             }
             return $timer;
         }
@@ -140,7 +143,7 @@ class Pinba
         return true;
     }
 
-    protected function getInfo()
+    protected function getInfo($removeHitCount = true)
     {
         $time = microtime(true);
 
@@ -163,7 +166,7 @@ class Pinba
 
         $timers = array();
         foreach ($this->timers as $id => $t) {
-            $timers[] = $this->getTimerInfo($id, $time);
+            $timers[] = $this->getTimerInfo($id, $time, $removeHitCount);
         }
 
         $hostname = $this->hostname;
@@ -216,7 +219,7 @@ class Pinba
     {
         // allow injection of custom starting data
         if ($struct === null) {
-            $struct = $this->getInfo();
+            $struct = $this->getInfo(false);
         }
 
         // massage info into correct format for pinba server
@@ -248,11 +251,14 @@ class Pinba
             if (isset($tags[$tagHash])) {
                 $originalId = $tags[$tagHash];
                 $struct["timers"][$originalId]["value"] = $struct["timers"][$originalId]["value"] + $timer["value"];
-                $struct["timers"][$originalId]["count"] = $struct["timers"][$originalId]["count"] + 1;
+                $struct["timers"][$originalId]["hit_count"] = $struct["timers"][$originalId]["hit_count"] +
+                    (isset($timer["hit_count"]) ? $timer["hit_count"] : 1);
                 unset($struct["timers"][$id]);
             } else {
                 $tags[$tagHash] = $id;
-                $struct["timers"][$id]["count"] = 1;
+                if (!isset($struct["timers"][$id]["hit_count"])) {
+                    $struct["timers"][$id]["hit_count"] = 1;
+                }
             }
         }
 
@@ -278,7 +284,7 @@ class Pinba
         $struct["timer_tag_name"] = array();
         $struct["timer_tag_value"] = array();
         foreach ($struct["timers"] as $timer) {
-            $struct["timer_hit_count"][] = $timer["count"];
+            $struct["timer_hit_count"][] = $timer["hit_count"];
             $struct["timer_value"][] = $timer["value"];
             $struct["timer_tag_count"][] = count($timer["tags"]);
             foreach ($timer["tagids"] as $key => $val) {

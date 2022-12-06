@@ -85,17 +85,17 @@ class PinbaClient extends Pinba
         $this->tags[$name] = $value;
     }
 
-    public function setTimer($tags, $value, $rusage = array(), $hit_count = null)
+    public function setTimer($tags, $value, $rusage = array(), $hit_count = 1)
     {
         return $this->upsertTimer(false, $tags, $value, $rusage, $hit_count);
     }
 
-    public function addTimer($tags, $value, $rusage = array(), $hit_count = null)
+    public function addTimer($tags, $value, $rusage = array(), $hit_count = 1)
     {
         return $this->upsertTimer(true, $tags, $value, $rusage, $hit_count);
     }
 
-    protected function upsertTimer($add, $tags, $value, $rusage = array(), $hit_count = null)
+    protected function upsertTimer($add, $tags, $value, $rusage = array(), $hit_count = 1)
     {
         if (!is_array($tags)) {
             trigger_error("setTimer() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
@@ -103,6 +103,10 @@ class PinbaClient extends Pinba
         }
         if (!self::verifyTags($tags))
         {
+            return false;
+        }
+        if ($hit_count <= 0) {
+            trigger_error("hit_count must be greater than 0 ($hit_count was passed)", E_USER_WARNING);
             return false;
         }
         if ($value < 0) {
@@ -117,11 +121,14 @@ class PinbaClient extends Pinba
         if ($add && isset($this->timers[$tagsHash])) {
             // no need to update 'tags' or 'started'
             $this->timers[$tagsHash]['value'] = $this->timers[$tagsHash]['value'] + $value;
+            $this->timers[$tagsHash]['hit_count'] =
+                (isset($this->timers[$tagsHash]['hit_count']) ? $this->timers[$tagsHash]['hit_count'] : 1) + $hit_count;
         } else {
             $this->timers[$tagsHash] = array(
                 "value" => $value,
                 "tags" => $tags,
-                "started" => false
+                "started" => false,
+                "hit_count" => $hit_count
             );
         }
     }
@@ -152,7 +159,7 @@ class PinbaClient extends Pinba
         if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
             $this->stopTimers(microtime(true));
         }
-        $info = $this->getInfo();
+        $info = $this->getInfo(false);
         if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
             foreach($info['timers'] as $id => $timer) {
                 if ($timer['started']) {

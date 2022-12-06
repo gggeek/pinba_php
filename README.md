@@ -40,13 +40,9 @@ We strive to implement the same API as Pinba extension ver. 1.1.2.
 As for the server side, the library is tested for compatibility against both a Pinba server and a Pinba2 one.
 
 Features not (yet) supported:
-- 3rd argument `$hit_count` in function `pinba_timer_start` is accepted but not used. Same for `PinbaClient` instances
-- in the data reported to the Pinba server, the following information has always a fixed value or is not reported at all:
-  `requests`
 - Timers data misses `ru_utime` and `ru_stime` members. This is true also for timers added to `PinbaClient` instances
-- ini setting `pinba.resolve_interval` is not supported and most likely never will
 
-Known issues - which cannot be fixed:
+Known issues - which cannot / won't be fixed:
 - lack in precision in time reporting: the time reported for page execution will be much shorter with any php code than
   it can be measured with a php extension. We suggest thus not to take the time reported by this package as an absolute
   value, but rather use it to check macro-issues, such as a page taking 10 seconds to run, or 10 times as much as another
@@ -61,6 +57,7 @@ Known issues - which cannot be fixed:
 - in the data reported to the Pinba server, `memory_footprint` has always a fixed value of 0 or is not reported at all.
   Again, using a `PinbaClient` instance can fix that - but there is no php function available that I know of which can
   report the equivalent usage of the `mallinfo` C call done by the php extension
+- ini setting `pinba.resolve_interval` is not supported and most likely never will
 
 ## Notes
 
