@@ -40,7 +40,7 @@ We strive to implement the same API as Pinba extension ver. 1.1.2.
 As for the server side, the library is tested for compatibility against both a Pinba server and a Pinba2 one.
 
 Features not (yet) supported:
-- ini settings `pinba.auto_flush` and `pinba.resolve_interval`
+- ini setting `pinba.resolve_interval`
 - 3rd argument `$hit_count` in function `pinba_timer_start` is accepted but not used. Same for `PinbaClient` instances
 - in the data reported by `pinba_get_info` and reported to the Pinba server, `doc_size` has always a value of 0. This
   can be worked around by using an instance of `PinbaClient` and calling `setDocumentSize`

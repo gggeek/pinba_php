@@ -42,7 +42,7 @@ class Pinba
     protected $hostname = null;
     protected $schema = '';
     protected $request_time = null;
-    protected $request_count = 1;
+    protected $request_count = 0;
     protected $memory_footprint = null;
     protected $memory_peak = null;
     protected $document_size = null;
@@ -199,7 +199,7 @@ class Pinba
             'req_time' => $time - $this->request_time,
             'ru_utime' => $ruUtime,
             'ru_stime' => $ruStime,
-            'req_count' => ($this->request_count !== null ? $this->request_count : 1), /// @todo should we default to 0 ?
+            'req_count' => ($this->request_count !== null ? $this->request_count : 0),
             'doc_size' => ($this->document_size !== null ? $this->document_size : 0),
             'schema' => $this->schema,
             'server_name' => ($this->server_name !== null ? $this->server_name : 'unknown'),

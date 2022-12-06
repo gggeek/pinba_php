@@ -307,7 +307,10 @@ class PinbaFunctions extends Pinba
      */
     public static function get_info()
     {
-        return self::instance()->getInfo();
+        $struct = self::instance()->getInfo();
+        // weird hack, copied from pinba extension! We send 0 by default to pinba, but display 1...
+        $struct["req_count"] = $struct["req_count"] + 1;
+        return $struct;
     }
 
     /**
@@ -470,7 +473,7 @@ class PinbaFunctions extends Pinba
         $i->request_time = microtime(true);
         $i->document_size = null;
         $i->memory_peak = null;
-        $i->request_count = 1;
+        $i->request_count = 0;
         /// @todo double check in extension C code: are these reset to null, or to current rusage?
         $i->rusage = array();
     }
@@ -494,6 +497,15 @@ class PinbaFunctions extends Pinba
         return self::$instance;
     }
 
+    public static function autoFlush()
+    {
+        $enabled = self::ini_get('pinba.auto_flush');
+        // manually tested: all possible "falsey" values of ini settings. When not set at all, we get false instead
+        if ($enabled !== '' && $enabled !== '0') {
+            self::flush();
+        }
+    }
+
     /**
      * A function not in the pinba extension api, needed to calculate total req. time and to insure we flush at end of
      * script execution. To be called as close as possible to the beginning of the main script.
@@ -512,7 +524,7 @@ class PinbaFunctions extends Pinba
         if (!self::$shutdown_registered)
         {
             self::$shutdown_registered = true;
-            register_shutdown_function('PinbaPhp\Polyfill\PinbaFunctions::flush');
+            register_shutdown_function('PinbaPhp\Polyfill\PinbaFunctions::autoFlush');
         }
     }
 }
