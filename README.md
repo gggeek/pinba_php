@@ -46,14 +46,15 @@ Known issues - which cannot / won't be fixed:
 - lack in precision in time reporting: the time reported for page execution will be much shorter with any php code than
   it can be measured with a php extension. We suggest thus not to take the time reported by this package as an absolute
   value, but rather use it to check macro-issues, such as a page taking 10 seconds to run, or 10 times as much as another
-  page. In the demo file [docs/sample.php](docs/sample.php) we showcase how to make time measurement as precise as possible
+  page. In the demo file [doc/sample.php](doc/sample.php) we showcase how to make time measurement as precise as possible
 - impact on system performances: the cpu time and ram used by this implementation (which runs on every page of your site!)
   are also bigger than the resources used by the php extension. It is up to you to decide if the extra load added to
   your server by using this package is worth it or not, esp. for heavily loaded production servers
 - the warnings raised when incorrect data is passed to the pinba php functions are of severity `E_USER_WARNING` instead of
   `E_WARNING`
 - in the data reported by `pinba_get_info` and reported to the Pinba server, `doc_size` has always a value of 0. This
-  can be worked around by using an instance of `PinbaClient` and calling `setDocumentSize`
+  can be worked around by using an instance of `PinbaClient` and calling `setDocumentSize` - see
+  [doc/measure_body_size.php](doc/measure_body_size.php) for an example
 - in the data reported to the Pinba server, `memory_footprint` has always a fixed value of 0 or is not reported at all.
   Again, using a `PinbaClient` instance can fix that - but there is no php function available that I know of which can
   report the equivalent usage of the `mallinfo` C call done by the php extension

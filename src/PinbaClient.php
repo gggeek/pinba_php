@@ -14,6 +14,7 @@ class PinbaClient extends Pinba
 {
     protected $servers = array();
     protected $flags;
+    protected $dataSent = false;
 
     /**
      * @param string[] $servers
@@ -34,7 +35,7 @@ class PinbaClient extends Pinba
 
     public function __destruct()
     {
-        if ($this->flags & pinba::AUTO_FLUSH) {
+        if ($this->flags & pinba::AUTO_FLUSH && ! $this->dataSent) {
             $this->send();
         }
     }
@@ -149,6 +150,9 @@ class PinbaClient extends Pinba
         foreach($this->servers as $server) {
             $out = $out & self::_send($server, $message);
         }
+
+        $this->dataSent = true;
+
         return $out;
     }
 

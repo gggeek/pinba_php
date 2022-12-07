@@ -466,6 +466,29 @@ class PinbaFunctions extends Pinba
         $i->rusage = array();
     }
 
+    /**
+     * @param int $flags
+     * @return string
+     */
+    public static function get_data($flags = 0)
+    {
+        $i = self::instance();
+
+        if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
+            $i->stopTimers(microtime(true));
+        }
+        $info = $i->getInfo(false);
+        if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
+            foreach($info['timers'] as $id => $timer) {
+                if ($timer['started']) {
+                    unset($info['timers'][$id]);
+                }
+            }
+        }
+
+        return $i->getPacket($info);
+    }
+
     // *** End of Pinba API ***
 
     /// Make this class a singleton: private constructor

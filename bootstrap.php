@@ -325,8 +325,20 @@ if (!function_exists('pinba_flush')) {
      */
     function pinba_flush($script_name = null, $flags = 0)
     {
-        pinba::flush($script_name, $flags);
+        return pinba::flush($script_name, $flags);
     }
+}
+
+if (!function_exists('pinba_get_data')) {
+    /**
+     * @param int $flags
+     * @return string
+     */
+    function pinba_get_data($flags = 0)
+    {
+        return pinba::get_data($flags);
+    }
+
 }
 
 if (!defined('PINBA_FLUSH_ONLY_STOPPED_TIMERS')) {
