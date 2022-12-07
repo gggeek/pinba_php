@@ -28,7 +28,7 @@ unless you have added explicit calls to the pinba api in your php code.
 
 See the API described at https://github.com/tony2001/pinba_engine/wiki/PHP-extension
 
-A trivial usage example can be found in [docs/sample.php](docs/sample.php).
+A trivial usage example can be found in [doc/sample.php](doc/sample.php).
 
 For viewing the gathered metrics, check out https://github.com/intaro/pinboard, https://github.com/pinba-server/pinba-server
 or https://github.com/ClickHouse-Ninja/Proton

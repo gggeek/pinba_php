@@ -160,7 +160,7 @@ if (!function_exists('pinba_timers_stop')) {
 
 if (!function_exists('pinba_timers_get')) {
     /**
-     * Get all timers info.
+     * Get all timers' info.
      *
      * @param int $flag - can be set to PINBA_ONLY_STOPPED_TIMERS
      * @return array
@@ -315,7 +315,7 @@ if (!function_exists('pinba_hostname_set')) {
 
 if (!function_exists('pinba_flush')) {
     /**
-     * Useful when you need to send request data to the server immediately (for long running scripts).
+     * Useful when you need to send request data to the server immediately (for long-running scripts).
      * You can use optional argument script_name to set custom script name.
      *
      * @param string $script_name
