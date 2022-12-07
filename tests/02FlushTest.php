@@ -67,10 +67,11 @@ class FlushTest extends TestCase
     function testFlush()
     {
         $t1 = pinba::timer_start(array('tag1' => 'testFlush'));
+
         pinba::flush();
 
-        $v = pinba::timer_get_info($t1);
-        $this->assertEquals(false, $v['started'], 'timer should have been stopped by flush call');
+        $v1 = pinba::timer_get_info($t1);
+        $this->assertEquals(false, $v1['started'], 'timer should have been stopped by flush call');
 
         $v = pinba::get_info();
 
@@ -87,7 +88,7 @@ class FlushTest extends TestCase
             $this->assertEquals($v['script_name'], $r['script_name'], 'script_name data was not sent correctly to the db');
             $this->assertEquals($v['doc_size'], (int)$r['doc_size'], 'doc_size data was not sent correctly to the db');
             $this->assertEquals(round($v['mem_peak_usage']/1024), (int)$r['mem_peak_usage'], 'mem_peak_usage data was not sent correctly to the db');
-            $this->assertEquals(count($v['timers']), (int)$r['timers_cnt'], 'timers data was not sent correctly to the db');
+            $this->assertEquals(1, (int)$r['timers_cnt'], 'timers data was not sent correctly to the db');
             $this->assertContains($r['schema'], array('', '<empty>'), 'schema data was not sent correctly to the db');
             if (!count($v['timers'])) {
                 $this->assertEquals(0, (int)$r['tags_cnt'], 'tags data was not sent correctly to the db');
@@ -109,10 +110,20 @@ class FlushTest extends TestCase
 
     function testFlushOnlyStoppedTimers()
     {
-        $t1 = pinba::timer_start(array('tag1' => 'testFlush'));
+        $t1 = pinba::timer_start(array('tag1' => 'testFlushOnlyStoppedTimers_1'));
+        $t2 = pinba::timer_add(array('tag1' => 'testFlushOnlyStoppedTimers_2'), 1);
         pinba::flush(null, pinba::FLUSH_ONLY_STOPPED_TIMERS);
 
-        $v = pinba::timer_get_info($t1);
-        $this->assertEquals(true, $v['started'], 'timer should not have been stopped by flush call');
+        $v1 = pinba::timer_get_info($t1);
+        $this->assertEquals(true, $v1['started'], 'timer should not have been stopped by flush call');
+        $v = pinba::timers_get();
+        $this->assertEquals(1, count($v), 'one timer should not have been deleted by flush call');
+        $this->assertEquals($v[0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
+        $v = pinba::get_info();
+        $this->assertEquals(1, count($v['timers']), 'one timer should not have been deleted by flush call');
+        $this->assertEquals($v['timers'][0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
+
+        $v = pinba::timer_get_info($t2);
+        $this->assertNotEquals(false, $v, 'flushed timer info should still be available');
     }
 }

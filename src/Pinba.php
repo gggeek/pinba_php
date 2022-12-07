@@ -98,7 +98,7 @@ class Pinba
     protected function deleteTimers($flags)
     {
         foreach ($this->timers as &$timer) {
-            if (($flags & self::ONLY_STOPPED_TIMERS) && !$timer["started"]) {
+            if (($flags & self::ONLY_STOPPED_TIMERS) && $timer["started"]) {
                 continue;
             }
             $timer['deleted'] = true;

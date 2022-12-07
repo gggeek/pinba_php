@@ -40,19 +40,19 @@ class GatherTest extends TestCase
 
     function testTimer()
     {
-        $t = pinba::timer_start(array('tag1' => 'hello', 'tag2' => 10), array('whatever'));
+        $t = pinba::timer_start(array('tag1' => 'testTimer', 'tag2' => 10), array('whatever'));
         $v = pinba::timer_get_info($t);
-        sleep(1);
+        usleep(100000);
         $r = pinba::timer_stop($t);
 
         $this->assertSame(true, $r, 'timer_stop should return true for running timers');
         $this->assertSame(true, $v['started'], 'Timer started should be true before stop');
         $this->assertGreaterThan(0, $v['value'], 'Timer time should be bigger than zero after start');
-        $this->assertLessThan(0.1, $v['value'], 'Timer time should be less than 0.1 secs after start');
+        $this->assertLessThan(0.01, $v['value'], 'Timer time should be less than 0.01 secs after start');
 
         $v = pinba::timer_get_info($t);
-        $this->assertGreaterThan(1.0, $v['value'], 'Timer time should be bigger than sleep time');
-        $this->assertSame(array('tag1' => 'hello', 'tag2' => 10), $v['tags'], 'Timer tags should keep injected value');
+        $this->assertGreaterThan(0.1, $v['value'], 'Timer time should be bigger than sleep time');
+        $this->assertSame(array('tag1' => 'testTimer', 'tag2' => 10), $v['tags'], 'Timer tags should keep injected value');
         $this->assertSame(array('whatever'), $v['data'], 'Timer data should keep injected value');
         $this->assertSame(false, $v['started'], 'Timer started should be false after stop');
 
@@ -78,17 +78,40 @@ class GatherTest extends TestCase
 
         pinba::timer_tags_merge($t, array('x' => 'y'));
         $v = pinba::timer_get_info($t);
-        $this->assertEquals(array('tag1' => 'hello', 'tag2' => 10, 'x' => 'y'), $v['tags'], 'Timer tags should have merged value');
+        $this->assertEquals(array('tag1' => 'testTimer', 'tag2' => 10, 'x' => 'y'), $v['tags'], 'Timer tags should have merged value');
 
         pinba::timer_tags_replace($t, array('x' => 'y'));
         $v = pinba::timer_get_info($t);
         $this->assertEquals(array('x' => 'y'), $v['tags'], 'Timer tags should have replaced value');
     }
 
+    function testTimerAdd()
+    {
+        $t = pinba::timer_add(array('tag1' => 'testTimerAdd'), 2.0);
+        $v = pinba::timer_get_info($t);
+
+        $this->assertSame(false, $v['started'], 'Timer started should be false before stop');
+        $this->assertSame(2.0, $v['value'], 'Timer time should be the same as set');
+    }
+
     function testNoTimer()
     {
         $this->expectException('\PHPUnit\Framework\Error\Warning');
         $v = pinba::timer_get_info(-1);
+    }
+
+    function testBadStop1()
+    {
+        $v = pinba::timer_stop(-1);
+        $this->assertSame(false, $v, 'Timer stop should fail on non-timer');
+    }
+
+    function testBadStop2()
+    {
+        $this->expectException('\PHPUnit\Framework\Error\Warning');
+        $t = pinba::timer_add(array('tag1' => 'testBadStop2'), 1.0);
+        $v = pinba::timer_stop($t);
+        $v = pinba::timer_stop($t);
     }
 
     function testTimerDelete()
