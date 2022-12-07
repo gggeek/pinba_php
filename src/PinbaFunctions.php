@@ -50,7 +50,8 @@ class PinbaFunctions extends Pinba
             "tags" => $tags,
             "started" => true,
             "data" => $data,
-            "hit_count" => $hit_count
+            "hit_count" => $hit_count,
+            "deleted" => false,
         );
         return $timer;
     }
@@ -87,9 +88,10 @@ class PinbaFunctions extends Pinba
      * @param array $tags an array of tags and their values in the form of "tag" => "value". Cannot contain numeric indexes for obvious reasons.
      * @param int $value timer value for new timer.
      * @param array $data optional array with user data, not sent to the server.
+     * @param int $hit_count
      * @return int|false Always returns new timer resource, except on failure.
      */
-    public static function timer_add($tags, $value, $data = null)
+    public static function timer_add($tags, $value, $data = null, $hit_count = 1)
     {
         if (!is_array($tags)) {
             trigger_error("pinba_timer_add() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
@@ -100,6 +102,10 @@ class PinbaFunctions extends Pinba
             return false;
         }
         if (!self::verifyTags($tags)) {
+            return false;
+        }
+        if ($hit_count <= 0) {
+            trigger_error("hit_count must be greater than 0 ($hit_count was passed)", E_USER_WARNING);
             return false;
         }
         if ($value < 0) {
@@ -113,7 +119,9 @@ class PinbaFunctions extends Pinba
             "value" => $value,
             "tags" => $tags,
             "started" => false,
-            "data" => $data
+            "data" => $data,
+            "deleted" => false,
+            "hit_count" => $hit_count
         );
         return $timer;
     }
@@ -253,17 +261,18 @@ class PinbaFunctions extends Pinba
      * Get all timers' info.
      *
      * @param int $flag
-     * @return array
+     * @return array[]
      */
     public static function timers_get($flag = 0)
     {
         $time = microtime(true);
         $out = array();
         $i = self::instance();
-        foreach($i->timers as $id => $timer) {
-            if (!($flag & self::ONLY_STOPPED_TIMERS) || $timer['started'] === false) {
-                $out[] = $i->getTimerInfo($id, $time);
+        foreach($i->timers as $id => $t) {
+            if ($t['deleted'] || (($flag & self::ONLY_STOPPED_TIMERS) && $t['started'])) {
+                continue;
             }
+            $out[] = $i->getTimerInfo($id, $time);
         }
         return $out;
     }
@@ -433,20 +442,15 @@ class PinbaFunctions extends Pinba
             return false;
         }
 
-        $info = $i->getInfo(false);
-        if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
-            foreach($info['timers'] as $id => $timer) {
-                if ($timer['started']) {
-                    unset($info['timers'][$id]);
-                }
-            }
-        }
+        $info = $i->getInfo(false, $flags);
 
         if ($script_name != null) {
             $info["script_name"] = $script_name;
         }
 
         $ok = self::_send(self::ini_get('pinba.server'), $i->getPacket($info));
+
+        $i->deleteTimers($flags);
 
         if ($flags & self::FLUSH_RESET_DATA) {
             self::reset();
@@ -458,7 +462,9 @@ class PinbaFunctions extends Pinba
     public static function reset()
     {
         $i = self::instance();
-        $i->timers = array();
+        foreach ($i->timers as &$timer) {
+            $timer['deleted'] = true;
+        }
         $i->tags = array();
         $i->request_time = microtime(true);
         $i->document_size = null;
@@ -471,22 +477,13 @@ class PinbaFunctions extends Pinba
     /**
      * @param int $flags
      * @return string
+     * @todo add support for self::ONLY_RUNNING_TIMERS (but what if both are set?)
      */
     public static function get_data($flags = 0)
     {
         $i = self::instance();
 
-        if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
-            $i->stopTimers(microtime(true));
-        }
-        $info = $i->getInfo(false);
-        if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
-            foreach($info['timers'] as $id => $timer) {
-                if ($timer['started']) {
-                    unset($info['timers'][$id]);
-                }
-            }
-        }
+        $info = $i->getInfo(false, $flags);
 
         return $i->getPacket($info);
     }

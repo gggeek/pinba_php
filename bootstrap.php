@@ -47,11 +47,12 @@ if (!function_exists('pinba_timer_add')) {
      * @param array $tags an array of tags and their values in the form of "tag" => "value". Cannot contain numeric indexes for obvious reasons.
      * @param int $value timer value for new timer.
      * @param array $data optional array with user data, not sent to the server.
-     * @return resource|int Always returns new timer resource.
+     * @param int $hit_count
+     * @return resource|int|false Always returns new timer resource.
      */
-    function pinba_timer_add($tags, $value, $data = array())
+    function pinba_timer_add($tags, $value, $data = null, $hit_count = 1)
     {
-        return pinba::timer_add($tags, $value, $data);
+        return pinba::timer_add($tags, $value, $data, $hit_count);
     }
 }
 
@@ -163,7 +164,7 @@ if (!function_exists('pinba_timers_get')) {
      * Get all timers' info.
      *
      * @param int $flag - can be set to PINBA_ONLY_STOPPED_TIMERS
-     * @return array
+     * @return array[]
      */
     function pinba_timers_get($flag = 0)
     {

@@ -5,8 +5,10 @@ vXXX - unreleased
 * improved: added support for `pinba.auto_flush` configuration option
 * improved: report automatically to Pinba the script's http status code by default
 * improved: support custom `hit_count` values on timer creation
+* improved: added 4th parameter `$hit_count = 1` to `pinba_timer_add`
 * improved: support (undocumented) function `pinba_get_data`
 * improved: replicate extension behaviour: default `req_count` is 1 in data from `get_info()`, but 0 as sent to the server
+* improved: replicate extension behaviour: once flushed, timers are not visible any more in `pinba_get_info` and `pinba_timers_get` calls
 * improved: replicate extension behaviour: a `PinbaClient` object will not flush automatically upon destruction if
   it was flushed manually beforehand
 * improved: added one more sample file: doc/measure_body_size.php

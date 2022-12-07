@@ -52,9 +52,11 @@ class Pinba
 
     protected static $options = array();
 
-    /// Make this class "abstract", in a way that subclasses can instantiate it
+    /// Make this class "abstract", in a way that subclasses can still instantiate it, but no one else can
     protected function __construct() {
     }
+
+    // *** public API (exposed by PinbaClient) ***
 
     public function setHostname($hostname)
     {
@@ -91,10 +93,22 @@ class Pinba
         return true;
     }
 
+    // *** methods for subclass use ***
+
+    protected function deleteTimers($flags)
+    {
+        foreach ($this->timers as &$timer) {
+            if (($flags & self::ONLY_STOPPED_TIMERS) && !$timer["started"]) {
+                continue;
+            }
+            $timer['deleted'] = true;
+        }
+    }
+
     protected function stopTimers($time)
     {
         foreach ($this->timers as &$timer) {
-            if ($timer["started"]) {
+            if ($timer["started"] && !$timer['deleted']) {
                 $timer["started"] = false;
                 $timer["value"] = $time - $timer["value"];
             }
@@ -102,6 +116,13 @@ class Pinba
         return true;
     }
 
+    /**
+     * NB: works for deleted timers too
+     * @param int $timer
+     * @param float $time
+     * @param bool $removeHitCount
+     * @return false|array
+     */
     protected function getTimerInfo($timer, $time, $removeHitCount = true)
     {
         if (isset($this->timers[$timer])) {
@@ -109,7 +130,8 @@ class Pinba
             if ($timer["started"]) {
                 $timer["value"] = $time - $timer["value"];
             }
-            if ($removeHitCount && isset($timer['hit_count'])) {
+            unset($timer['deleted']);
+            if ($removeHitCount) {
                 unset($timer['hit_count']);
             }
             return $timer;
@@ -143,7 +165,7 @@ class Pinba
         return true;
     }
 
-    protected function getInfo($removeHitCount = true)
+    protected function getInfo($removeHitCount = true, $flags = 0)
     {
         $time = microtime(true);
 
@@ -166,7 +188,10 @@ class Pinba
 
         $timers = array();
         foreach ($this->timers as $id => $t) {
-            $timers[] = $this->getTimerInfo($id, $time, $removeHitCount);
+            if ($t['deleted'] || (($flags & self::ONLY_STOPPED_TIMERS) && $t['started'])) {
+                continue;
+            }
+            $timers[] = $this->getTimerInfo($id, $time, $removeHitCount);;
         }
 
         $hostname = $this->hostname;
@@ -251,14 +276,10 @@ class Pinba
             if (isset($tags[$tagHash])) {
                 $originalId = $tags[$tagHash];
                 $struct["timers"][$originalId]["value"] = $struct["timers"][$originalId]["value"] + $timer["value"];
-                $struct["timers"][$originalId]["hit_count"] = $struct["timers"][$originalId]["hit_count"] +
-                    (isset($timer["hit_count"]) ? $timer["hit_count"] : 1);
+                $struct["timers"][$originalId]["hit_count"] = $struct["timers"][$originalId]["hit_count"] + $timer["hit_count"];
                 unset($struct["timers"][$id]);
             } else {
                 $tags[$tagHash] = $id;
-                if (!isset($struct["timers"][$id]["hit_count"])) {
-                    $struct["timers"][$id]["hit_count"] = 1;
-                }
             }
         }
 

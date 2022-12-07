@@ -120,16 +120,18 @@ class PinbaClient extends Pinba
         $tagsHash = md5(var_export($tagsHash, true));
 
         if ($add && isset($this->timers[$tagsHash])) {
-            // no need to update 'tags' or 'started'
+            // no need to update 'tags' (same value) nor 'started' (client timers are always stopped)
+            /// @todo what about 'deleted' ?
             $this->timers[$tagsHash]['value'] = $this->timers[$tagsHash]['value'] + $value;
-            $this->timers[$tagsHash]['hit_count'] =
-                (isset($this->timers[$tagsHash]['hit_count']) ? $this->timers[$tagsHash]['hit_count'] : 1) + $hit_count;
+            $this->timers[$tagsHash]['hit_count'] = $this->timers[$tagsHash]['hit_count'] + $hit_count;
         } else {
             $this->timers[$tagsHash] = array(
                 "value" => $value,
                 "tags" => $tags,
                 "started" => false,
-                "hit_count" => $hit_count
+                "data" => null,
+                "hit_count" => $hit_count,
+                "deleted" => false
             );
         }
     }
@@ -170,14 +172,8 @@ class PinbaClient extends Pinba
         if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
             $this->stopTimers(microtime(true));
         }
-        $info = $this->getInfo(false);
-        if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
-            foreach($info['timers'] as $id => $timer) {
-                if ($timer['started']) {
-                    unset($info['timers'][$id]);
-                }
-            }
-        }
+
+        $info = $this->getInfo(false, $flags);
 
         return $this->getPacket($info);
     }
