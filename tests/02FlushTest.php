@@ -82,7 +82,7 @@ class FlushTest extends TestCase
         if (self::$pinba1) {
             $r = self::$db->query("SELECT * FROM request WHERE script_name='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
 
-            $this->assertEquals(1, count($r), 'no data found in the db for a flush call');
+            $this->assertEquals(1, count($r), 'no request data found in the db for a flush call');
             $r = $r[0];
             $this->assertEquals($v['hostname'], $r['hostname'], 'hostname data was not sent correctly to the db');
             $this->assertEquals(0, $r['req_count'], 'req_count data was not sent correctly to the db');
@@ -95,8 +95,13 @@ class FlushTest extends TestCase
             $this->assertEquals(2, (int)$r['tags_cnt'], 'tags data was not sent correctly to the db');
             $this->assertEquals('class=FlushTest,test=testFlush', $r['tags'], 'tags data was not sent correctly to the db');
 
-            /// @todo in the db for the timers sent (tags, data, value)
-
+            $r = self::$db->query("SELECT t.*, g.name AS tagname, tt.value AS tagvalue FROM timer t, timertag tt, tag g, request r WHERE t.id=tt.timer_id AND tt.tag_id = g.id AND t.request_id = r.id AND r.script_name='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
+            $this->assertEquals(1, count($r), 'no timer data found in the db for a flush call');
+            $r = $r[0];
+            $this->assertEquals(1, $r['hit_count'], 'timer hit_count was not sent correctly to the db');
+            $this->assertEquals('testFlush', $r['tagvalue'], 'timer tag value was not sent correctly to the db');
+            $this->assertEquals('timer', $r['tagname'], 'timer tag name was not sent correctly to the db');
+            $this->assertEquals(round($v1['value'], 3), round($r['value'], 3), 'timer value was not sent correctly to the db');
         }
 
         if (self::$pinba1) {

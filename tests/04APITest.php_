@@ -1,0 +1,38 @@
+<?php
+
+use PinbaPhp\Polyfill\Pinba as pinba;
+use Yoast\PHPUnitPolyfills\TestCases\TestCase;
+
+class APITest extends TestCase
+{
+    protected $db;
+
+    /**
+     * @beforeClass
+     */
+    public function setEnvUp()
+    {
+        ini_set('pinba.enabled', 1);
+        ini_set('pinba.server', getenv('PINBA_SERVER') . ':' . getenv('PINBA_PORT'));
+    }
+
+    /**
+     * @before
+     */
+    public function setTestUp()
+    {
+        /// @todo delete all existing timers and pinba data in mysql; generate a unique id for the test to use in flush()
+
+        $this->db = mysqli_connect(
+            getenv('PINBA_DB_SERVER'),
+            getenv('PINBA_DB_USER'),
+            getenv('PINBA_DB_PASSWORD'),
+            getenv('PINBA_DB_DATABASE')
+        );
+    }
+
+    function testFlush()
+    {
+        pinba::flush();
+    }
+}
