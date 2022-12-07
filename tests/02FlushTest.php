@@ -66,7 +66,9 @@ class FlushTest extends TestCase
 
     function testFlush()
     {
-        $t1 = pinba::timer_start(array('tag1' => 'testFlush'));
+        $t1 = pinba::timer_start(array('timer' => 'testFlush'));
+        pinba::tag_set('class', 'FlushTest');
+        pinba::tag_set('test', 'testFlush');
 
         pinba::flush();
 
@@ -90,12 +92,10 @@ class FlushTest extends TestCase
             $this->assertEquals(round($v['mem_peak_usage']/1024), (int)$r['mem_peak_usage'], 'mem_peak_usage data was not sent correctly to the db');
             $this->assertEquals(1, (int)$r['timers_cnt'], 'timers data was not sent correctly to the db');
             $this->assertContains($r['schema'], array('', '<empty>'), 'schema data was not sent correctly to the db');
-            if (!count($v['timers'])) {
-                $this->assertEquals(0, (int)$r['tags_cnt'], 'tags data was not sent correctly to the db');
-                $this->assertEquals('', $r['tags'], 'tags data was not sent correctly to the db');
-            }
+            $this->assertEquals(2, (int)$r['tags_cnt'], 'tags data was not sent correctly to the db');
+            $this->assertEquals('class=FlushTest,test=testFlush', $r['tags'], 'tags data was not sent correctly to the db');
 
-            /// @todo add timers and tags to the data sent, check that they are in the db
+            /// @todo in the db for the timers sent (tags, data, value)
 
         }
 
@@ -110,8 +110,8 @@ class FlushTest extends TestCase
 
     function testFlushOnlyStoppedTimers()
     {
-        $t1 = pinba::timer_start(array('tag1' => 'testFlushOnlyStoppedTimers_1'));
-        $t2 = pinba::timer_add(array('tag1' => 'testFlushOnlyStoppedTimers_2'), 1);
+        $t1 = pinba::timer_start(array('timer' => 'testFlushOnlyStoppedTimers_1'));
+        $t2 = pinba::timer_add(array('timer' => 'testFlushOnlyStoppedTimers_2'), 1);
         pinba::flush(null, pinba::FLUSH_ONLY_STOPPED_TIMERS);
 
         $v1 = pinba::timer_get_info($t1);
