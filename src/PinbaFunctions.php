@@ -250,7 +250,7 @@ class PinbaFunctions extends Pinba
     }
 
     /**
-     * Get all timers info.
+     * Get all timers' info.
      *
      * @param int $flag
      * @return array
@@ -410,7 +410,7 @@ class PinbaFunctions extends Pinba
     }
 
     /**
-     * Useful when you need to send request data to the server immediately (for long running scripts).
+     * Useful when you need to send request data to the server immediately (for long-running scripts).
      * You can use optional argument script_name to set custom script name.
      *
      * @param string $script_name
@@ -422,15 +422,17 @@ class PinbaFunctions extends Pinba
      */
     public static function flush($script_name = null, $flags = 0)
     {
+        $i = self::instance();
+
+        // replicate behaviour of php ext: stop running timers even if pinba.enabled is set to false
+        if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
+            $i->stopTimers(microtime(true));
+        }
+
         if (!self::ini_get('pinba.enabled')) {
             return false;
         }
 
-        $i = self::instance();
-
-        if (!($flags & self::FLUSH_ONLY_STOPPED_TIMERS)) {
-            $i->stopTimers(microtime(true));
-        }
         $info = $i->getInfo(false);
         if ($flags & self::FLUSH_ONLY_STOPPED_TIMERS) {
             foreach($info['timers'] as $id => $timer) {
