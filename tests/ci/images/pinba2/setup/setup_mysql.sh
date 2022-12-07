@@ -5,7 +5,7 @@ set -e
 # Let the original code set up mysql, but not leave it running
 sed -i '$ d' /usr/local/bin/docker-entrypoint.sh
 
-if fgrep -q MYSQL_INIT_PATH /usr/local/bin/docker-entrypoint.sh >/dev/null 2>/dev/null; then
+if grep -F -q MYSQL_INIT_PATH /usr/local/bin/docker-entrypoint.sh >/dev/null 2>/dev/null; then
     export MYSQL_INIT_PATH=/root/build/mysql_init.sql
     /usr/local/bin/docker-entrypoint.sh mysqld
 else

@@ -21,8 +21,8 @@ configure_php_ini() {
     # @todo make this optional
     if which phpdismod >/dev/null 2>/dev/null; then
         phpdismod xdebug
-    elif [ -f /usr/local/php/$PHP_VERSION/etc/conf.d/20-xdebug.ini ]; then
-        mv /usr/local/php/$PHP_VERSION/etc/conf.d/20-xdebug.ini /usr/local/php/$PHP_VERSION/etc/conf.d/20-xdebug.ini.bak
+    elif [ -f "/usr/local/php/$PHP_VERSION/etc/conf.d/20-xdebug.ini" ]; then
+        mv "/usr/local/php/$PHP_VERSION/etc/conf.d/20-xdebug.ini" "/usr/local/php/$PHP_VERSION/etc/conf.d/20-xdebug.ini.bak"
     fi
 }
 
@@ -141,10 +141,10 @@ PHPVER=$(php -r 'echo implode(".",array_slice(explode(".",PHP_VERSION),0,2));' 2
 
 service "php${PHPVER}-fpm" stop || true
 
-if [ -d /etc/php/${PHPVER}/fpm ]; then
-    configure_php_ini /etc/php/${PHPVER}/fpm/php.ini
-elif [ -f /usr/local/php/${PHPVER}/etc/php.ini ]; then
-    configure_php_ini /usr/local/php/${PHPVER}/etc/php.ini
+if [ -d "/etc/php/${PHPVER}/fpm" ]; then
+    configure_php_ini "/etc/php/${PHPVER}/fpm/php.ini"
+elif [ -f "/usr/local/php/${PHPVER}/etc/php.ini" ]; then
+    configure_php_ini "/usr/local/php/${PHPVER}/etc/php.ini"
 fi
 
 # use a nice name for the php-fpm service, so that it does not depend on php version running. Try to make that work
@@ -171,7 +171,7 @@ if [ -n "$(dpkg --list | grep apache)" ]; then
     fi
     a2dismod mpm_prefork
     a2enmod mpm_event
-    a2enconf php${PHPVER}-fpm
+    a2enconf "php${PHPVER}-fpm"
     service apache2 restart
 fi
 
