@@ -3,11 +3,14 @@ vXXX - unreleased
 * fixed a bug in merging timers tags, introduced in v0.3
 * fixed: request tags were not being properly sent to the server
 * fixed: parsing IPv6 addresses, or addresses in the form `[127.0.0.1]:8080` in `pinba_server` configuration option
+* fixed: return type of `pinba_timers_get`
 * improved: added support for `pinba.auto_flush` configuration option
 * improved: report automatically to Pinba the script's http status code by default
 * improved: support custom `hit_count` values on timer creation
 * improved: added 4th parameter `$hit_count = 1` to `pinba_timer_add`
 * improved: support (undocumented) function `pinba_get_data`
+* improved: support (undocumented) function `pinba_reset`
+* improved: replicate extension behaviour: return `false` instead of `null` on a failed `pinba_tag_get` call
 * improved: replicate extension behaviour: default `req_count` is 1 in data from `get_info()`, but 0 as sent to the server
 * improved: replicate extension behaviour: once flushed, timers are not visible any more in `pinba_get_info` and `pinba_timers_get` calls
 * improved: replicate extension behaviour: a `PinbaClient` object will not flush automatically upon destruction if
