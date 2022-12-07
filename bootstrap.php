@@ -164,7 +164,7 @@ if (!function_exists('pinba_timers_get')) {
      * Get all timers' info.
      *
      * @param int $flag - can be set to PINBA_ONLY_STOPPED_TIMERS
-     * @return array[]
+     * @return resource[]|int[]
      */
     function pinba_timers_get($flag = 0)
     {
@@ -272,7 +272,7 @@ if (!function_exists('pinba_tag_set')) {
 if (!function_exists('pinba_tag_get')) {
     /**
      * @param string $tag
-     * @return string
+     * @return string|false
      */
     function pinba_tag_get($tag)
     {
@@ -338,6 +338,14 @@ if (!function_exists('pinba_get_data')) {
     function pinba_get_data($flags = 0)
     {
         return pinba::get_data($flags);
+    }
+
+}
+
+if (!function_exists('pinba_reset')) {
+    function pinba_reset()
+    {
+        return pinba::reset();
     }
 
 }

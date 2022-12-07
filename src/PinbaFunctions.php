@@ -258,10 +258,10 @@ class PinbaFunctions extends Pinba
     }
 
     /**
-     * Get all timers' info.
+     * Get all timers' ids.
      *
      * @param int $flag
-     * @return array[]
+     * @return int[]|resource[]
      */
     public static function timers_get($flag = 0)
     {
@@ -272,7 +272,7 @@ class PinbaFunctions extends Pinba
             if ($t['deleted'] || (($flag & self::ONLY_STOPPED_TIMERS) && $t['started'])) {
                 continue;
             }
-            $out[] = $i->getTimerInfo($id, $time);
+            $out[] = $id;
         }
         return $out;
     }
@@ -377,13 +377,13 @@ class PinbaFunctions extends Pinba
 
     /**
      * @param string $tag
-     * @return string
+     * @return string|false
      */
     public static function tag_get($tag)
     {
         /// @todo raise a warning if tag does not exists?
 
-        return isset(self::instance()->tags[$tag]) ? self::instance()->tags[$tag] : null;
+        return isset(self::instance()->tags[$tag]) ? self::instance()->tags[$tag] : false;
     }
 
     /**
