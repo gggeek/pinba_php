@@ -73,35 +73,36 @@ class FlushTest extends TestCase
         pinba::flush();
 
         $v1 = pinba::timer_get_info($t1);
-        $this->assertEquals(false, $v1['started'], 'timer should have been stopped by flush call');
+        $this->assertSame(false, $v1['started'], 'timer should have been stopped by flush call');
 
         $v = pinba::get_info();
+        $this->assertSame(0, count($v['timers']), 'timer should have been deleted by flush call');
 
         sleep(2); // we can not reduce it, as we have to wait for rollup into the reports tables
 
         if (self::$pinba1) {
             $r = self::$db->query("SELECT * FROM request WHERE script_name='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
 
-            $this->assertEquals(1, count($r), 'no request data found in the db for a flush call');
+            $this->assertSame(1, count($r), 'no request data found in the db for a flush call');
             $r = $r[0];
-            $this->assertEquals($v['hostname'], $r['hostname'], 'hostname data was not sent correctly to the db');
-            $this->assertEquals(0, $r['req_count'], 'req_count data was not sent correctly to the db');
-            $this->assertEquals($v['server_name'], $r['server_name'], 'server_name data was not sent correctly to the db');
-            $this->assertEquals($v['script_name'], $r['script_name'], 'script_name data was not sent correctly to the db');
-            $this->assertEquals($v['doc_size'], (int)$r['doc_size'], 'doc_size data was not sent correctly to the db');
-            $this->assertEquals(round($v['mem_peak_usage']/1024), (int)$r['mem_peak_usage'], 'mem_peak_usage data was not sent correctly to the db');
-            $this->assertEquals(1, (int)$r['timers_cnt'], 'timers data was not sent correctly to the db');
+            $this->assertSame($v['hostname'], $r['hostname'], 'hostname data was not sent correctly to the db');
+            $this->assertSame(0, (int)$r['req_count'], 'req_count data was not sent correctly to the db');
+            $this->assertSame($v['server_name'], $r['server_name'], 'server_name data was not sent correctly to the db');
+            $this->assertSame($v['script_name'], $r['script_name'], 'script_name data was not sent correctly to the db');
+            $this->assertSame($v['doc_size'], (int)$r['doc_size'], 'doc_size data was not sent correctly to the db');
+            $this->assertSame((int)round($v['mem_peak_usage']/1024), (int)$r['mem_peak_usage'], 'mem_peak_usage data was not sent correctly to the db');
+            $this->assertSame(1, (int)$r['timers_cnt'], 'timers data was not sent correctly to the db');
             $this->assertContains($r['schema'], array('', '<empty>'), 'schema data was not sent correctly to the db');
-            $this->assertEquals(2, (int)$r['tags_cnt'], 'tags data was not sent correctly to the db');
-            $this->assertEquals('class=FlushTest,test=testFlush', $r['tags'], 'tags data was not sent correctly to the db');
+            $this->assertSame(2, (int)$r['tags_cnt'], 'tags data was not sent correctly to the db');
+            $this->assertSame('class=FlushTest,test=testFlush', $r['tags'], 'tags data was not sent correctly to the db');
 
             $r = self::$db->query("SELECT t.*, g.name AS tagname, tt.value AS tagvalue FROM timer t, timertag tt, tag g, request r WHERE t.id=tt.timer_id AND tt.tag_id = g.id AND t.request_id = r.id AND r.script_name='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
-            $this->assertEquals(1, count($r), 'no timer data found in the db for a flush call');
+            $this->assertSame(1, count($r), 'no timer data found in the db for a flush call');
             $r = $r[0];
-            $this->assertEquals(1, $r['hit_count'], 'timer hit_count was not sent correctly to the db');
-            $this->assertEquals('testFlush', $r['tagvalue'], 'timer tag value was not sent correctly to the db');
-            $this->assertEquals('timer', $r['tagname'], 'timer tag name was not sent correctly to the db');
-            $this->assertEquals(round($v1['value'], 3), round($r['value'], 3), 'timer value was not sent correctly to the db');
+            $this->assertSame(1, (int)$r['hit_count'], 'timer hit_count was not sent correctly to the db');
+            $this->assertSame('testFlush', $r['tagvalue'], 'timer tag value was not sent correctly to the db');
+            $this->assertSame('timer', $r['tagname'], 'timer tag name was not sent correctly to the db');
+            $this->assertSame(round($v1['value'], 3), round($r['value'], 3), 'timer value was not sent correctly to the db');
         }
 
         if (self::$pinba1) {
@@ -110,25 +111,38 @@ class FlushTest extends TestCase
             $col = 'script';
         }
         $r = self::$db->query("SELECT * FROM report_by_script_name WHERE $col='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
-        $this->assertEquals(1, count($r), 'no aggregate data found in the db for a flush call');
+        $this->assertSame(1, count($r), 'no aggregate data found in the db for a flush call');
     }
 
-    function testFlushOnlyStoppedTimers()
+    /**
+     * @dataProvider provideEnabledSettings
+     */
+    function testFlushOnlyStoppedTimers($pinbaEnabled)
     {
-        $t1 = pinba::timer_start(array('timer' => 'testFlushOnlyStoppedTimers_1'));
-        $t2 = pinba::timer_add(array('timer' => 'testFlushOnlyStoppedTimers_2'), 1);
+        pinba::ini_set('pinba.enabled', $pinbaEnabled);
+
+        $t1 = pinba::timer_start(array('timer' => 'testFlushOnlyStoppedTimers_1_'.$pinbaEnabled));
+        $t2 = pinba::timer_add(array('timer' => 'testFlushOnlyStoppedTimers_2_'.$pinbaEnabled), 1);
         pinba::flush(null, pinba::FLUSH_ONLY_STOPPED_TIMERS);
 
         $v1 = pinba::timer_get_info($t1);
-        $this->assertEquals(true, $v1['started'], 'timer should not have been stopped by flush call');
+        $this->assertSame(true, $v1['started'], 'timer should not have been stopped by flush call');
         $v = pinba::timers_get();
-        $this->assertEquals(1, count($v), 'one timer should not have been deleted by flush call');
-        $this->assertEquals($v[0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
+        $this->assertSame(1 + (1 - $pinbaEnabled), count($v), 'one timer should not have been deleted by flush call');
+        $this->assertSame($v[0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
         $v = pinba::get_info();
-        $this->assertEquals(1, count($v['timers']), 'one timer should not have been deleted by flush call');
-        $this->assertEquals($v['timers'][0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
+        $this->assertSame(1 + (1 - $pinbaEnabled), count($v['timers']), 'one timer should not have been deleted by flush call');
+        $this->assertSame($v['timers'][0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
 
         $v = pinba::timer_get_info($t2);
         $this->assertNotEquals(false, $v, 'flushed timer info should still be available');
+    }
+
+    function provideEnabledSettings()
+    {
+        return array(
+            array(1),
+            array(0),
+        );
     }
 }
