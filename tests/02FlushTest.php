@@ -1,6 +1,6 @@
 <?php
 
-include_once('APITest.php');
+include_once(__DIR__.'/APITest.php');
 
 use PinbaPhp\Polyfill\PinbaFunctions as pinba;
 
