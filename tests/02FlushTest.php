@@ -1,9 +1,10 @@
 <?php
 
-use PinbaPhp\Polyfill\PinbaFunctions as pinba;
-use Yoast\PHPUnitPolyfills\TestCases\TestCase;
+include_once('APITest.php');
 
-class FlushTest extends TestCase
+use PinbaPhp\Polyfill\PinbaFunctions as pinba;
+
+class FlushTest extends APITest
 {
     /** @var mysqli $db */
     protected static $db;
@@ -19,6 +20,10 @@ class FlushTest extends TestCase
     {
         pinba::ini_set('pinba.enabled', 1);
         pinba::ini_set('pinba.server', getenv('PINBA_SERVER') . ':' . getenv('PINBA_PORT'));
+        if (extension_loaded('pinba')) {
+            ini_set('pinba.enabled', 1);
+            ini_set('pinba.server', getenv('PINBA_SERVER') . ':' . getenv('PINBA_PORT'));
+        }
 
         self::$db = new mysqli(
             getenv('PINBA_DB_SERVER'),
@@ -49,6 +54,9 @@ class FlushTest extends TestCase
     {
         // avoid flushing on end of phpunit
         pinba::ini_set('pinba.enabled', 0);
+        if (extension_loaded('pinba')) {
+            ini_set('pinba.enabled', 0);
+        }
     }
 
     /**
@@ -56,26 +64,33 @@ class FlushTest extends TestCase
      */
     public function setTestUp()
     {
-        /// @todo delete all existing timers and pinba data in mysql (is that possible at all?)
-        pinba::reset();
+        // delete all existing timers and tags
+        /// @todo delete all existing timers, tags and request   data in mysql (is that possible at all?)
+        $this->pReset();
 
         // generate a unique id for the test, transparently used in flush() calls
         $this->id = uniqid();
         pinba::script_name_set($this->id);
+        if (extension_loaded('pinba')) {
+            pinba_script_name_set($this->id);
+        }
     }
 
-    function testFlush()
+    /**
+     * @dataProvider listAPIPrefixes
+     */
+    function testFlush($prefix)
     {
-        $t1 = pinba::timer_start(array('timer' => 'testFlush'));
-        pinba::tag_set('class', 'FlushTest');
-        pinba::tag_set('test', 'testFlush');
+        $t1 = $this->cpf($prefix, 'timer_start', array('timer' => 'testFlush'));
+        $this->cpf($prefix, 'tag_set', 'class', 'FlushTest');
+        $this->cpf($prefix, 'tag_set', 'test', 'testFlush');
 
-        pinba::flush();
+        $this->cpf($prefix, 'flush');
 
-        $v1 = pinba::timer_get_info($t1);
+        $v1 = $this->cpf($prefix, 'timer_get_info', $t1);
         $this->assertSame(false, $v1['started'], 'timer should have been stopped by flush call');
 
-        $v = pinba::get_info();
+        $v = $this->cpf($prefix, 'get_info');
         $this->assertSame(0, count($v['timers']), 'timer should have been deleted by flush call');
 
         sleep(2); // we can not reduce it, as we have to wait for rollup into the reports tables
@@ -115,34 +130,45 @@ class FlushTest extends TestCase
     }
 
     /**
-     * @dataProvider provideEnabledSettings
+     * @dataProvider listAPIPrefixesMatrix
      */
-    function testFlushOnlyStoppedTimers($pinbaEnabled)
+    function testFlushOnlyStoppedTimers($prefix, $pinbaEnabled)
     {
-        pinba::ini_set('pinba.enabled', $pinbaEnabled);
+        if ($prefix == 'pinba_') {
+            $this->cpf('', 'ini_set', 'pinba.enabled', $pinbaEnabled);
+            $case = '0';
+        } else {
+            $this->cpf($prefix, 'ini_set', 'pinba.enabled', $pinbaEnabled);
+            $case = '1';
+        }
 
-        $t1 = pinba::timer_start(array('timer' => 'testFlushOnlyStoppedTimers_1_'.$pinbaEnabled));
-        $t2 = pinba::timer_add(array('timer' => 'testFlushOnlyStoppedTimers_2_'.$pinbaEnabled), 1);
-        pinba::flush(null, pinba::FLUSH_ONLY_STOPPED_TIMERS);
+        $t1 = $this->cpf($prefix, 'timer_start', array('timer' => 'testFlushOnlyStoppedTimers_1_' . $case . $pinbaEnabled));
+        $t2 = $this->cpf($prefix, 'timer_add', array('timer' => 'testFlushOnlyStoppedTimers_2_' . $case . $pinbaEnabled), 1);
+        $this->cpf($prefix, 'flush', null, pinba::FLUSH_ONLY_STOPPED_TIMERS);
 
-        $v1 = pinba::timer_get_info($t1);
+        $v1 = $this->cpf($prefix, 'timer_get_info', $t1);
         $this->assertSame(true, $v1['started'], 'timer should not have been stopped by flush call');
-        $v = pinba::timers_get();
+        $v = $this->cpf($prefix, 'timers_get');
         $this->assertSame(1 + (1 - $pinbaEnabled), count($v), 'one timer should not have been deleted by flush call');
-        $this->assertSame($v[0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
-        $v = pinba::get_info();
+        $ti = $this->cpf($prefix, 'timer_get_info', $v[0]);
+        if ($pinbaEnabled == 0 && $case == 0) {
+            // pinba ext does shuffle timers, so the live one might be the second...
+            $t2i = $this->cpf($prefix, 'timer_get_info', $v[1]);
+            $this->assertContains( $v1['tags'], array($ti['tags'], $t2i['tags']), 'started timer should not have been deleted by flush call');
+        } else {
+            $this->assertSame($ti['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
+        }
+        $v = $this->cpf($prefix, 'get_info');
         $this->assertSame(1 + (1 - $pinbaEnabled), count($v['timers']), 'one timer should not have been deleted by flush call');
-        $this->assertSame($v['timers'][0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
+        //$this->assertSame($v['timers'][0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
+        if ($pinbaEnabled == 0 && $case == 0) {
+            // pinba ext does shuffle timers, so the live one might be the second...
+            $this->assertContains($v1['tags'], array($v['timers'][0]['tags'], $v['timers'][1]['tags']), 'started timer should not have been deleted by flush call');
+        } else {
+            $this->assertSame($v['timers'][0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
+        }
 
-        $v = pinba::timer_get_info($t2);
+        $v = $this->cpf($prefix, 'timer_get_info', $t2);
         $this->assertNotEquals(false, $v, 'flushed timer info should still be available');
-    }
-
-    function provideEnabledSettings()
-    {
-        return array(
-            array(1),
-            array(0),
-        );
     }
 }
