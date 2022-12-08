@@ -345,7 +345,7 @@ if (!function_exists('pinba_get_data')) {
 if (!function_exists('pinba_reset')) {
     function pinba_reset()
     {
-        return pinba::reset();
+        pinba::reset();
     }
 
 }
