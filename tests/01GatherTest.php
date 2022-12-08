@@ -26,11 +26,7 @@ class GatherTest extends APITest
         $this->assertSame('php', $v['hostname'], 'Host name should default to php for cli scripts');
         $this->assertSame('./vendor/bin/phpunit', $v['script_name'], 'Script name should match phpunit runner');
         $this->assertSame('unknown', $v['server_name'], 'Server name should be unknown');
-        /// @todo
-        //$this->assertSame(1, $v['req_count'], 'Req count should be 1 for cli scripts');
-
-        $this->cpf($prefix, 'hostname_set', 'hello');
-        $this->cpf($prefix, 'script_name_set', 'world.php');
+        $this->assertSame(1, $v['req_count'], 'Req count should be 1 for cli scripts');
     }
 
     /**
@@ -43,6 +39,7 @@ class GatherTest extends APITest
         $v = $this->cpf($prefix, 'get_info');
         $this->assertSame('hello', $v['hostname'], 'Host name should match what was set');
         $this->assertSame('world.php', $v['script_name'], 'Script name should match what was set');
+        /// @todo reset nostname, script_name, in case they are used by other test later / the same test with another $prefix
     }
 
     /**
