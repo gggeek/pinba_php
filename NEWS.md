@@ -1,4 +1,4 @@
-vXXX - unreleased
+v0.4 - 8/12/2022
 
 * fixed a bug in merging timers tags, introduced in v0.3
 * fixed: request tags were not being properly sent to the server
