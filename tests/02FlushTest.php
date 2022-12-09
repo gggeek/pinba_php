@@ -149,24 +149,13 @@ class FlushTest extends APITest
         $v1 = $this->cpf($prefix, 'timer_get_info', $t1);
         $this->assertSame(true, $v1['started'], 'timer should not have been stopped by flush call');
         $v = $this->cpf($prefix, 'timers_get');
-        $this->assertSame(1 + (1 - $pinbaEnabled), count($v), 'one timer should not have been deleted by flush call');
+        $this->assertSame(1, count($v), 'one timer should not have been deleted by flush call');
         $ti = $this->cpf($prefix, 'timer_get_info', $v[0]);
-        if ($pinbaEnabled == 0 && $case == 0) {
-            // pinba ext does shuffle timers, so the live one might be the second...
-            $t2i = $this->cpf($prefix, 'timer_get_info', $v[1]);
-            $this->assertContains( $v1['tags'], array($ti['tags'], $t2i['tags']), 'started timer should not have been deleted by flush call');
-        } else {
-            $this->assertSame($ti['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
-        }
+        $this->assertSame($ti['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
         $v = $this->cpf($prefix, 'get_info');
-        $this->assertSame(1 + (1 - $pinbaEnabled), count($v['timers']), 'one timer should not have been deleted by flush call');
+        $this->assertSame(1, count($v['timers']), 'one timer should not have been deleted by flush call');
         //$this->assertSame($v['timers'][0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
-        if ($pinbaEnabled == 0 && $case == 0) {
-            // pinba ext does shuffle timers, so the live one might be the second...
-            $this->assertContains($v1['tags'], array($v['timers'][0]['tags'], $v['timers'][1]['tags']), 'started timer should not have been deleted by flush call');
-        } else {
-            $this->assertSame($v['timers'][0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
-        }
+        $this->assertSame($v['timers'][0]['tags'], $v1['tags'], 'started timer should not have been deleted by flush call');
 
         $v = $this->cpf($prefix, 'timer_get_info', $t2);
         $this->assertNotEquals(false, $v, 'flushed timer info should still be available');

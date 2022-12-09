@@ -435,6 +435,8 @@ class PinbaFunctions extends Pinba
         }
 
         if (!self::ini_get('pinba.enabled')) {
+            // delete stopped timers, even though we will not be sending the data via udp
+            $i->deleteTimers($flags);
             return false;
         }
 
