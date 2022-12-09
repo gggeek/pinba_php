@@ -25,14 +25,16 @@ jobs:
                     -   php: '8.0'
                         pinba-container: tony2001/pinba
                         operating-system: ubuntu-22.04
-                    -   php: '7.4'
+                    -   php: 'default'
+                        # this runs on php 7.4 with the native pinba ext installed (ver 1.1.1)
                         pinba-container: anchorfree/pinba2
-                        operating-system: ubuntu-22.04
-                        # nb: the version of phpunit we use does not support code coverage generation on php 8
-                        code-coverage: true
+                        operating-system: ubuntu-20.04
                     -   php: '7.3'
                         pinba-container: tony2001/pinba
                         operating-system: ubuntu-22.04
+                        # nb: the version of phpunit we use does not support code coverage generation on php 8.
+                        # we prefer to run code coverage on a php install without the native extension, hence here
+                        code-coverage: true
                     -   php: '7.2'
                         pinba-container: anchorfree/pinba2
                         operating-system: ubuntu-20.04
