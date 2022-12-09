@@ -1,3 +1,8 @@
+vXXX - unreleased
+
+* improved: replicate extension behaviour: convert tag values to string upon setting them
+* improved: replicate extension behaviour: delete stopped timers when calling `flush` even if `pinba.enabled=0`
+
 v0.4 - 8/12/2022
 
 * fixed a bug in merging timers tags, introduced in v0.3

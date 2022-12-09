@@ -170,6 +170,11 @@ class GatherTest extends APITest
         $this->assertSame(2, count($timers), 'there should be 2 timers');
         $timers = $this->cpf($prefix, 'timers_get', pinba::ONLY_STOPPED_TIMERS);
         $this->assertSame(2, count($timers), 'there should be 2 stopped timers');
+        $t2 = $this->cpf($prefix, 'timer_add', array('timer' => 'testGetTimers_3'), 1);
+        $timers = $this->cpf($prefix, 'timers_get');
+        $this->assertSame(3, count($timers), 'there should be 3 timers');
+        $timers = $this->cpf($prefix, 'timers_get', pinba::ONLY_STOPPED_TIMERS);
+        $this->assertSame(3, count($timers), 'there should be 3 stopped timers');
     }
 
     /**

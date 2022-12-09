@@ -18,10 +18,8 @@ class FlushTest extends APITest
      */
     public static function setEnvUp()
     {
-        pinba::ini_set('pinba.enabled', 1);
         pinba::ini_set('pinba.server', getenv('PINBA_SERVER') . ':' . getenv('PINBA_PORT'));
         if (extension_loaded('pinba')) {
-            ini_set('pinba.enabled', 1);
             ini_set('pinba.server', getenv('PINBA_SERVER') . ':' . getenv('PINBA_PORT'));
         }
 
@@ -73,6 +71,12 @@ class FlushTest extends APITest
         pinba::script_name_set($this->id);
         if (extension_loaded('pinba')) {
             pinba_script_name_set($this->id);
+        }
+
+        // in case any test sets pinba.enabled=0
+        pinba::ini_set('pinba.enabled', 1);
+        if (extension_loaded('pinba')) {
+            ini_set('pinba.enabled', 1);
         }
     }
 
@@ -159,5 +163,27 @@ class FlushTest extends APITest
 
         $v = $this->cpf($prefix, 'timer_get_info', $t2);
         $this->assertNotEquals(false, $v, 'flushed timer info should still be available');
+    }
+
+    /**
+     * @dataProvider listAPIPrefixes
+     */
+    function testFlushAdditiveTimers($prefix)
+    {
+        if (!self::$pinba1) {
+            $this->markTestSkipped('Can not test flushed timers on pinba2');
+        }
+
+        $t1 = $this->cpf($prefix, 'timer_add', array('timer' => 'testFlushAdditiveTimers', 'extra' => md5($prefix)), 2);
+        $t2 = $this->cpf($prefix, 'timer_add', array('extra' => md5($prefix), 'timer' => 'testFlushAdditiveTimers'), 3);
+        $t3 = $this->cpf($prefix, 'timer_start', array('timer' => 'testFlushAdditiveTimers', 'extra' => md5($prefix)));
+        usleep(100000);
+        $this->cpf($prefix, 'flush');
+        sleep(2);
+        $r = self::$db->query("SELECT t.* FROM timer t, request r WHERE t.request_id = r.id AND r.script_name='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
+        $this->assertSame(1, count($r), 'no timer data found in the db for a flush call');
+        $r = $r[0];
+        $this->assertSame(3, (int)$r['hit_count'], 'timer hit_count was not sent correctly to the db');
+        $this->assertSame(round(5.1, 1), round((float)$r['value'], 1), 'timer value was not sent correctly to the db');
     }
 }
