@@ -365,13 +365,11 @@ class PinbaFunctions extends Pinba
      */
     public static function tag_set($tag, $value)
     {
-        /// @todo abort on non-string $value?
-
         if ($value === "") {
             trigger_error("tag name cannot be empty", E_USER_WARNING);
             return false;
         }
-        self::instance()->tags[$tag] = $value;
+        self::instance()->tags[$tag] = (string)$value;
         return true;
     }
 
@@ -381,8 +379,6 @@ class PinbaFunctions extends Pinba
      */
     public static function tag_get($tag)
     {
-        /// @todo raise a warning if tag does not exists?
-
         return isset(self::instance()->tags[$tag]) ? self::instance()->tags[$tag] : false;
     }
 

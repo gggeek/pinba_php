@@ -185,11 +185,11 @@ class GatherTest extends APITest
         $this->cpf($prefix, 'tag_set', 'hey', 'you');
         $v = $this->cpf($prefix, 'tag_get', 'hey');
         $this->assertSame('you', $v, 'tag should have been modified');
-        $this->cpf($prefix, 'tag_set', 'you', 'hey');
+        $this->cpf($prefix, 'tag_set', 'you', 10);
         $v = $this->cpf($prefix, 'tags_get');
-        $this->assertSame(array('hey' => 'you', 'you' => 'hey'), $v, 'tags should be present');
+        $this->assertSame(array('hey' => 'you', 'you' => '10'), $v, 'tags should be present and converted to string');
         $v = $this->cpf($prefix, 'get_info');
-        $this->assertSame(array('hey' => 'you', 'you' => 'hey'), $v['tags'], 'tags should be present');
+        $this->assertSame(array('hey' => 'you', 'you' => '10'), $v['tags'], 'tags should be present');
         $v = $this->cpf($prefix, 'tag_delete', 'hey');
         $this->assertSame(true, $v, 'tag deletion should succeed');
         $v = $this->cpf($prefix, 'tag_get', 'hey');

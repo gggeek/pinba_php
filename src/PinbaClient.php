@@ -83,7 +83,7 @@ class PinbaClient extends Pinba
 
     public function setTag($name, $value)
     {
-        $this->tags[$name] = $value;
+        $this->tags[$name] = (string)$value;
     }
 
     public function setTimer($tags, $value, $rusage = array(), $hit_count = 1)

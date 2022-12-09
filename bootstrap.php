@@ -343,6 +343,11 @@ if (!function_exists('pinba_get_data')) {
 }
 
 if (!function_exists('pinba_reset')) {
+    /**
+     * Reset common request data.
+     * NB: unlike the php extension, this version also deletes all timers.
+     * @return void
+     */
     function pinba_reset()
     {
         pinba::reset();
