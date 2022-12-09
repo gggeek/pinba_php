@@ -59,12 +59,12 @@ if [ "${PHP_VERSION}" = default ]; then
         php${PHPSUFFIX} \
         php${PHPSUFFIX}-cli \
         php${PHPSUFFIX}-curl \
-        php${PHPSUFFIX}-dom \
         php${PHPSUFFIX}-fpm \
         php${PHPSUFFIX}-mbstring \
         php${PHPSUFFIX}-mysql \
         ${PINBAPHP} \
         php${PHPSUFFIX}-xdebug
+        php${PHPSUFFIX}-xml
 else
     # on GHA runners ubuntu version, php 7.4 and 8.0 seem to be preinstalled. Remove them if found
     for PHP_CURRENT in $(dpkg -l | grep -E 'php.+-common' | awk '{print $2}'); do
@@ -127,11 +127,11 @@ else
             php${PHP_VERSION} \
             php${PHP_VERSION}-cli \
             php${PHP_VERSION}-curl \
-            php${PHP_VERSION}-dom \
             php${PHP_VERSION}-fpm \
             php${PHP_VERSION}-mbstring \
             php${PHP_VERSION}-mysql \
-            php${PHP_VERSION}-xdebug
+            php${PHP_VERSION}-xdebug \
+            php${PHP_VERSION}-xml
 
         update-alternatives --set php /usr/bin/php${PHP_VERSION}
     fi
