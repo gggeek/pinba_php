@@ -398,7 +398,7 @@ class Pinba
      * set both in php.ini and in php code
      * @param string $option
      * @return string|false
-     * @see PinbaFunctions::ini_set()
+     * @see Pinba::ini_set()
      */
     public static function ini_get($option)
     {

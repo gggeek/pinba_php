@@ -66,6 +66,24 @@ Known issues - which cannot / won't be fixed:
 - the `pinba_reset` call does delete all exiting timers, unlike what the same function from the php extension does.
   Again, the upstream behaviour does feel faulty
 
+## Performances
+
+These results are indicative of the time and memory overhead of executing 1000 function calls in a loop, and instrumenting
+each execution with a separate timer.
+
+As you can see, the execution delay introduced is very small, less than 1 millisecond. The memory overhead is proportional
+to the number of timers added and the tags attached to each timer.
+
+```
+No timing:       0.00001 secs,       0 bytes used
+Pinba-extension: 0.00072 secs,  280.640 bytes used
+PHP-Pinba:       0.00062 secs,  412.920 bytes used
+```
+NB: weirdly enough, the php extension seems to be slightly slower on average than the pure-php implementations. Having
+taken a cursory look at the C code of the extension, I suspect this is because it executes too many `gettimeofday` calls...
+
+(tests executed with php 7.4 in an Ubuntu Focal container, running within an Ubuntu Jammy VM with 4 vCPU allocated)
+
 ## Notes
 
 Includes code from the Protobuf for PHP lib by Iván -DrSlump- Montes: https://github.com/drslump/Protobuf-PHP
