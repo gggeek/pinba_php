@@ -63,7 +63,7 @@ if [ "${PHP_VERSION}" = default ]; then
         php${PHPSUFFIX}-mbstring \
         php${PHPSUFFIX}-mysql \
         ${PINBAPHP} \
-        php${PHPSUFFIX}-xdebug
+        php${PHPSUFFIX}-xdebug \
         php${PHPSUFFIX}-xml
 else
     # on GHA runners ubuntu version, php 7.4 and 8.0 seem to be preinstalled. Remove them if found
