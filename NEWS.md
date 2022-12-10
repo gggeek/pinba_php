@@ -1,8 +1,9 @@
-vXXX - unreleased
+v1.0 - 10/12/2022
 
 * improved: replicate extension behaviour: convert tag values to string upon setting them
 * improved: replicate extension behaviour: delete stopped timers when calling `flush` even if `pinba.enabled=0`
 * improved: increased test code coverage. Also, use utf8 for the reports table in the pinba2 test db
+* improved: added a benchmark file and documented expected performances
 
 v0.4 - 8/12/2022
 
