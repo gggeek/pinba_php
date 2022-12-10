@@ -196,23 +196,16 @@ class FlushTest extends APITest
     function testFlushUTF8($prefix)
     {
         // greek word 'kosme'
-        $this->id = uniqid() . '_κόσμε';
-        pinba::script_name_set($this->id);
-        if (extension_loaded('pinba')) {
-            pinba_script_name_set($this->id);
-        }
+        $id = uniqid() . '_κόσμε';
 
-        $this->cpf($prefix, 'flush');
+        $this->cpf($prefix, 'flush', $id);
         sleep(2); // we can not reduce it, as we have to wait for rollup into the reports tables
         if (self::$pinba1) {
             $col = 'script_name';
         } else {
             $col = 'script';
         }
-        $r = self::$db->query("SELECT * FROM report_by_script_name WHERE $col='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
-
-        //$r = self::$db->query("SELECT * FROM report_by_script_name;")->fetch_all(MYSQLI_ASSOC);
-        //var_dump($r);var_dump($this->id);
+        $r = self::$db->query("SELECT * FROM report_by_script_name WHERE $col='" . self::$db->escape_string($id) ."';")->fetch_all(MYSQLI_ASSOC);
 
         $this->assertSame(1, count($r), 'no aggregate data found in the db for a flush call');
     }
