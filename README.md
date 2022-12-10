@@ -59,6 +59,12 @@ Known issues - which cannot / won't be fixed:
   Again, using a `PinbaClient` instance can fix that - but there is no php function available that I know of which can
   report the equivalent usage of the `mallinfo` C call done by the php extension
 - ini setting `pinba.resolve_interval` is not supported and most likely never will
+- the default value reported to the Pina engine for the `schema` field is an empty string, rather than not being set at
+  all. This results in the database table storing a value of '<empty>' instead of NULL. At the same time, sending a
+  value of NULL makes the server-side engine re-use the last non-null value from a previous pinba packet, which seems a
+  faulty behaviour
+- the `pinba_reset` call does delete all exiting timers, unlike what the same function from the php extension does.
+  Again, the upstream behaviour does feel faulty
 
 ## Notes
 
