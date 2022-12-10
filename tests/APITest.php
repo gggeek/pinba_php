@@ -9,6 +9,10 @@ abstract class APITest extends TestCase
     /// PolyfillPinbaClass
     const PPC = 'PinbaPhp\Polyfill\PinbaFunctions::';
 
+    /** @var mysqli $db */
+    protected static $db;
+    protected static $pinba1 = false;
+
     /**
      * "Call Pinba Function"
      * Too smart for our own good: allow to call the same function twice: once using the php extension name and once
@@ -63,6 +67,15 @@ abstract class APITest extends TestCase
         return $out;
     }
 
+    public function listClientClasses()
+    {
+        $out = array(
+            array('PinbaPhp\Polyfill\PinbaClient'),
+            array('PinbaClient'),
+        );
+        return $out;
+    }
+
     protected function pReset()
     {
         // delete all existing timers and tags
@@ -75,5 +88,32 @@ abstract class APITest extends TestCase
             pinba_flush();
             ini_set('pinba.enabled', $e);
         }
+    }
+
+    protected static function dbConnect()
+    {
+        self::$db = new mysqli(
+            getenv('PINBA_DB_SERVER'),
+            getenv('PINBA_DB_USER'),
+            getenv('PINBA_DB_PASSWORD'),
+            getenv('PINBA_DB_DATABASE'),
+            getenv('PINBA_DB_PORT')
+        );
+
+        if (self::$db->connect_errno) {
+            /// @todo find an exception existing from phpunit 4 to 8
+            throw new PHPUnit_Framework_Exception("Can not connect to the Pinba DB");
+        }
+
+        // Pinba 2 does not have raw data tables
+        $r = self::$db->query("SELECT table_name FROM information_schema.tables WHERE table_schema='pinba' AND table_name='request';")->fetch_row();
+        if (is_array($r) && count($r)) {
+            self::$pinba1 = true;
+        } else {
+            // the test db in the pinba2 container defaults to latin-1, but we create the report table using utf8
+            self::$db->set_charset('utf8');
+        }
+        // this is required to "start" the reporting table
+        self::$db->query("SELECT * FROM report_by_script_name;")->fetch_all(MYSQLI_ASSOC);
     }
 }

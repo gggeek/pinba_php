@@ -6,11 +6,6 @@ use PinbaPhp\Polyfill\PinbaFunctions as pinba;
 
 class FlushTest extends APITest
 {
-    /** @var mysqli $db */
-    protected static $db;
-
-    protected static $pinba1 = false;
-
     protected $id;
 
     /**
@@ -23,29 +18,7 @@ class FlushTest extends APITest
             ini_set('pinba.server', getenv('PINBA_SERVER') . ':' . getenv('PINBA_PORT'));
         }
 
-        self::$db = new mysqli(
-            getenv('PINBA_DB_SERVER'),
-            getenv('PINBA_DB_USER'),
-            getenv('PINBA_DB_PASSWORD'),
-            getenv('PINBA_DB_DATABASE'),
-            getenv('PINBA_DB_PORT')
-        );
-
-        if (self::$db->connect_errno) {
-            /// @todo find an exception existing from phpunit 4 to 8
-            throw new PHPUnit_Framework_Exception("Can not connect to the Pinba DB");
-        }
-
-        // Pinba 2 does not have raw data tables
-        $r = self::$db->query("SELECT table_name FROM information_schema.tables WHERE table_schema='pinba' AND table_name='request';")->fetch_row();
-        if (is_array($r) && count($r)) {
-            self::$pinba1 = true;
-        } else {
-            // the test db in the pinba2 container defaults to latin-1, but we create the report table using utf8
-            self::$db->set_charset('utf8');
-        }
-        // this is required to "start" the reporting table
-        self::$db->query("SELECT * FROM report_by_script_name;")->fetch_all(MYSQLI_ASSOC);
+        self::dbConnect();
     }
 
     /**
