@@ -10,7 +10,7 @@ class ClassTest extends APITest
      */
     function testPinbaClient($clientClass)
     {
-        $id = uniqid();
+        $id = uniqid('03');
         $rusage = array(0.5, 0.6);
 
         /** @var PinbaClient $c */

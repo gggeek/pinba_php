@@ -43,7 +43,7 @@ class FlushTest extends APITest
         $this->pReset();
 
         // generate a unique id for the test, transparently used in flush() calls
-        $this->id = uniqid();
+        $this->id = uniqid('02');
         pinba::script_name_set($this->id);
         if (extension_loaded('pinba')) {
             pinba_script_name_set($this->id);

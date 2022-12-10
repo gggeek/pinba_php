@@ -40,6 +40,11 @@ class Pinba
     protected $script_name = null;
     protected $server_name = null;
     protected $hostname = null;
+    // Note: we initialize this to '' instead of NULL because we found out during testing the pinba server, when it does
+    // receive a packet with no schema member set, reuses the last 'schema' value received in a previous packet.
+    // This way we force the packets sent to always have the 'schema' field set, by default to a zero-length string.
+    // That in turn makes the pinba engine store the value '<empty>' in the db.
+    // This behaviour makes testing more deterministic, and honestly looks more like a bugfix than anything else
     protected $schema = '';
     protected $request_time = null;
     protected $request_count = 0;
