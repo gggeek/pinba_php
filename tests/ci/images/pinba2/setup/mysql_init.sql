@@ -24,4 +24,4 @@ CREATE TABLE `report_by_script_name` (
     `memory_footprint` bigint(20) NOT NULL,
     `memory_per_sec` float NOT NULL,
     `memory_percent` float
-) ENGINE=PINBA DEFAULT CHARSET=latin1 COMMENT='v2/request/60/~script/no_percentiles/no_filters';
+) ENGINE=PINBA DEFAULT CHARSET=utf8 COMMENT='v2/request/60/~script/no_percentiles/no_filters';

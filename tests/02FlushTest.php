@@ -40,6 +40,9 @@ class FlushTest extends APITest
         $r = self::$db->query("SELECT table_name FROM information_schema.tables WHERE table_schema='pinba' AND table_name='request';")->fetch_row();
         if (is_array($r) && count($r)) {
             self::$pinba1 = true;
+        } else {
+            // the test db in the pinba2 container defaults to latin-1, but we create the report table using utf8
+            self::$db->set_charset('utf8');
         }
         // this is required to "start" the reporting table
         self::$db->query("SELECT * FROM report_by_script_name;")->fetch_all(MYSQLI_ASSOC);
@@ -176,14 +179,41 @@ class FlushTest extends APITest
 
         $t1 = $this->cpf($prefix, 'timer_add', array('timer' => 'testFlushAdditiveTimers', 'extra' => md5($prefix)), 2);
         $t2 = $this->cpf($prefix, 'timer_add', array('extra' => md5($prefix), 'timer' => 'testFlushAdditiveTimers'), 3);
-        $t3 = $this->cpf($prefix, 'timer_start', array('timer' => 'testFlushAdditiveTimers', 'extra' => md5($prefix)));
+        $t3 = $this->cpf($prefix, 'timer_start', array('timer' => 'testFlushAdditiveTimers', 'extra' => md5($prefix)), array('whatever'), 2);
         usleep(100000);
         $this->cpf($prefix, 'flush');
-        sleep(2);
+        sleep(1);
         $r = self::$db->query("SELECT t.* FROM timer t, request r WHERE t.request_id = r.id AND r.script_name='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
         $this->assertSame(1, count($r), 'no timer data found in the db for a flush call');
         $r = $r[0];
-        $this->assertSame(3, (int)$r['hit_count'], 'timer hit_count was not sent correctly to the db');
+        $this->assertSame(4, (int)$r['hit_count'], 'timer hit_count was not sent correctly to the db');
         $this->assertSame(round(5.1, 1), round((float)$r['value'], 1), 'timer value was not sent correctly to the db');
+    }
+
+    /**
+     * @dataProvider listAPIPrefixes
+     */
+    function testFlushUTF8($prefix)
+    {
+        // greek word 'kosme'
+        $this->id = uniqid() . '_κόσμε';
+        pinba::script_name_set($this->id);
+        if (extension_loaded('pinba')) {
+            pinba_script_name_set($this->id);
+        }
+
+        $this->cpf($prefix, 'flush');
+        sleep(2); // we can not reduce it, as we have to wait for rollup into the reports tables
+        if (self::$pinba1) {
+            $col = 'script_name';
+        } else {
+            $col = 'script';
+        }
+        $r = self::$db->query("SELECT * FROM report_by_script_name WHERE $col='" . self::$db->escape_string($this->id) ."';")->fetch_all(MYSQLI_ASSOC);
+
+        //$r = self::$db->query("SELECT * FROM report_by_script_name;")->fetch_all(MYSQLI_ASSOC);
+        //var_dump($r);var_dump($this->id);
+
+        $this->assertSame(1, count($r), 'no aggregate data found in the db for a flush call');
     }
 }

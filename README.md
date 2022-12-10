@@ -74,8 +74,9 @@ Other known packages exist implementing the same idea, such as: https://github.c
 
 ## Running tests
 
-The recommended way to run the library test suite is via the provided Docker containers.
-A handy shell script is available that simplifies usage of Docker.
+The recommended way to run the library's test suite is via the provided Docker containers and the corresponding
+Docker Compose configuration.
+A handy shell script is available that simplifies usage of Docker and Docker Compose.
 
 The full sequence of operations is:
 
@@ -88,13 +89,13 @@ The full sequence of operations is:
     ./tests/ci/vm.sh cleanup
 
 By default, tests are run using php 7.4 in a Container based on Ubuntu 20 Focal. The data is sent to a container running
-the original Pinba server.
+the original Pinba server - it can also be configured to be sent to a container running the Pinba2 server instead.
 
 You can change the version of PHP and Ubuntu in use by setting the environment variables `PHP_VERSION` and `UBUNTU_VERSION`
-before building the Containers.
+before building the containers.
 
-You can switch the target Container used for the testsuite to one running Pinba2 by setting the environment variables
-`PINBA_SERVER=pinba2` and `PINBA_PORT=3002` before starting the Containers.
+You can switch the target Container used for the testsuite to the one running Pinba2 by setting the environment variables
+`PINBA_DB_SERVER=pinba2`, `PINBA_SERVER=pinba2` and `PINBA_PORT=3002` before starting the containers.
 
 ### Testing tips
 
