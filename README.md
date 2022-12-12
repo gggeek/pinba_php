@@ -161,6 +161,12 @@ You can switch the target Container used for the testsuite to the one running Pi
   Wireshark of decoding the protobuf-formatted messages, set up its configuration as described at https://wiki.wireshark.org/Protobuf.md.
   The `.proto` file describing the messages used by Pinba can be found at https://github.com/badoo/pinba2/blob/master/proto/pinba.proto
 
+  As an alternative which does not require Wireshark, it is also possible to save to a file the string resulting from
+  `pinba_get_data()` calls, then decode it using the `protoc` tool - which is included by default in the test container:
+
+      php myTestFile > test.rawmsg
+      protoc --decode=Pinba.Request tests/pinba.proto < test.rawmsg
+
 ## License
 
 Use of this software is subject to the terms in the [license](LICENSE) file
