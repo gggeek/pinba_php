@@ -1,3 +1,10 @@
+v1.1.1 - 12/12/2022
+
+* improved: if any of the string values sent to the Pinba server include a NUL character (`chr(0)`), behave the same way
+  as the php extension does, ie. truncating the string to the part before the first NUL character occurrence
+* improved: added to the tests directory the .proto file, and made available within the test containers the `protoc`
+  command-line tool, to simplify decoding of raw messages
+
 v1.1 - 12/12/2022
 
 * improved: added new ini setting `pinba.inhibited` which drastically reduces time and memory usage when you want
