@@ -27,6 +27,11 @@ class PinbaFunctions extends Pinba
      */
     public static function timer_start($tags, $data = null, $hit_count = 1)
     {
+        // we return 0 to make it possible to later call other `timer_` functions on this without warnings
+        if (self::$inhibited === true || self::isInhibited()) {
+            return 0;
+        }
+
         if (!is_array($tags)) {
             trigger_error("pinba_timer_start() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
             return false;
@@ -64,6 +69,10 @@ class PinbaFunctions extends Pinba
      */
     public static function timer_stop($timer)
     {
+        if (self::$inhibited === true || self::isInhibited()) {
+            return false;
+        }
+
         if (!is_int($timer)) {
             trigger_error("pinba_timer_stop() expects parameter 1 to be int, " . gettype($timer) . " given", E_USER_WARNING);
             return false;
@@ -93,6 +102,11 @@ class PinbaFunctions extends Pinba
      */
     public static function timer_add($tags, $value, $data = null, $hit_count = 1)
     {
+        // we return 0 to make it possible to later call other `timer_` functions on this without warnings
+        if (self::$inhibited === true || self::isInhibited()) {
+            return 0;
+        }
+
         if (!is_array($tags)) {
             trigger_error("pinba_timer_add() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
             return false;
@@ -265,7 +279,6 @@ class PinbaFunctions extends Pinba
      */
     public static function timers_get($flag = 0)
     {
-        $time = microtime(true);
         $out = array();
         $i = self::instance();
         foreach($i->timers as $id => $t) {
@@ -365,6 +378,10 @@ class PinbaFunctions extends Pinba
      */
     public static function tag_set($tag, $value)
     {
+        if (self::$inhibited === true || self::isInhibited()) {
+            return false;
+        }
+
         if ($value === "") {
             trigger_error("tag name cannot be empty", E_USER_WARNING);
             return false;
@@ -427,6 +444,10 @@ class PinbaFunctions extends Pinba
      */
     public static function flush($script_name = null, $flags = 0)
     {
+        if (self::$inhibited === true || self::isInhibited()) {
+            return false;
+        }
+
         $i = self::instance();
 
         // replicate behaviour of php ext: stop running timers even if pinba.enabled is set to false

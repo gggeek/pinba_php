@@ -33,6 +33,25 @@ A trivial usage example can be found in [doc/sample.php](doc/sample.php).
 For viewing the gathered metrics, check out https://github.com/intaro/pinboard, https://github.com/pinba-server/pinba-server
 or https://github.com/ClickHouse-Ninja/Proton
 
+### Extensions to the original API
+
+#### Pinba::ini_set
+
+If the pinba php extension is not enabled in your setup (which is most likely the case, as otherwise you would not
+be using this package), it is not possible from php code to modify the values for ini options `pinba.enabled` and
+`pinba.server`. While it is possible to set their value in `php.ini`, if you want to modify their value at runtime you
+will have instead to use methods `\PinbaPhp\Polyfill\pinba::ini_set($option, $value)`. You should also use corresponding
+method `\PinbaPhp\Polyfill\pinba::ini_get($option)` to check it.
+
+### ini option `pinba.inhibited`
+
+In case you want to keep your code instrumented with `pinba_timer_add`, `pinba_timer_stop` and similar calls but are
+not collecting the pinba data anymore, and you want to reduce as much as possible the overhead imposed by this package,
+please set in `pinba.inhibited=1` `php.ini`.
+
+Using `pinba.enabled=0` or `pinba.auto_flush=0` is not recommended in that scenario, as, while they both disable the sending
+of data, they do not prevent timers to be actually created.
+
 ## Compatibility
 
 We strive to implement the same API as Pinba extension ver. 1.1.2.
@@ -79,8 +98,19 @@ No timing:       0.00001 secs,       0 bytes used
 Pinba-extension: 0.00072 secs,  280.640 bytes used
 PHP-Pinba:       0.00062 secs,  412.920 bytes used
 ```
+
 NB: weirdly enough, the php extension seems to be slightly slower on average than the pure-php implementations. Having
 taken a cursory look at the C code of the extension, I suspect this is because it executes too many `gettimeofday` calls...
+
+In case you want to keep your code instrumented with lots of `pinba_timer_start` calls, and reduce the overhead of using
+the extension as much as possible (while of course not measuring anything anymore), you can set `pinba.inhibited=1` in php.ini.
+
+With that set, this is the overhead you can expect for "timing" 1000 executions of a function call:
+
+```
+No timing:      0.00001 secs,       0 bytes used
+PHPPinba timed: 0.00009 secs,       0 bytes used
+```
 
 (tests executed with php 7.4 in an Ubuntu Focal container, running within an Ubuntu Jammy VM with 4 vCPU allocated)
 

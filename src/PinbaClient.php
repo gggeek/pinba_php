@@ -83,7 +83,12 @@ class PinbaClient extends Pinba
 
     public function setTag($name, $value)
     {
+        if (self::$inhibited === true || self::isInhibited()) {
+            return false;
+        }
+
         $this->tags[$name] = (string)$value;
+        return true;
     }
 
     public function setTimer($tags, $value, $rusage = array(), $hit_count = 1)
@@ -98,6 +103,10 @@ class PinbaClient extends Pinba
 
     protected function upsertTimer($add, $tags, $value, $rusage = array(), $hit_count = 1)
     {
+        if (self::$inhibited === true || self::isInhibited()) {
+            return '';
+        }
+
         if (!is_array($tags)) {
             trigger_error("setTimer() expects parameter 1 to be array, " . gettype($tags) . " given", E_USER_WARNING);
             return false;
@@ -134,6 +143,8 @@ class PinbaClient extends Pinba
                 "deleted" => false
             );
         }
+
+        return $tagsHash;
     }
 
     /**
@@ -142,6 +153,10 @@ class PinbaClient extends Pinba
      */
     public function send($flags = null)
     {
+        if (self::$inhibited === true || self::isInhibited()) {
+            return '';
+        }
+
         if (!count($this->servers)) {
             return false;
         }

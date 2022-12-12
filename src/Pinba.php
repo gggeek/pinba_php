@@ -56,6 +56,7 @@ class Pinba
     protected $tags = array();
 
     protected static $options = array();
+    protected static $inhibited = null;
 
     /// Make this class "abstract", in a way that subclasses can still instantiate it, but no one else can
     protected function __construct() {
@@ -388,6 +389,15 @@ class Pinba
         }
 
         return false;
+    }
+
+    protected static function isInhibited()
+    {
+        if (self::$inhibited === null) {
+            self::$inhibited = (bool)self::ini_get('pinba.inhibited');
+        }
+
+        return self::$inhibited;
     }
 
     /**

@@ -1,3 +1,9 @@
+v1.1 - 12/12/2022
+
+* improved: added new ini setting `pinba.inhibited` which drastically reduces time and memory usage when you want
+  to really disable all measurement overhead while leaving code instrumented
+* improved: fixed memory consumption measurement in `benchmark.php`
+
 v1.0 - 10/12/2022
 
 * improved: replicate extension behaviour: convert tag values to string upon setting them
