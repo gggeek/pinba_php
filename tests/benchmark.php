@@ -42,6 +42,9 @@ if (extension_loaded('pinba'))
     ini_set('pinba.enanled', 0);
     pinba_flush();
     pinba_reset();
+} else {
+    $m1 = 0;
+    $time1 = 0;
 }
 
 $m2 = memory_get_usage();
@@ -52,7 +55,7 @@ for($i = 0; $i < ITERATIONS; $i++) {
     pinba::timer_stop($t);
 }
 $time2 = microtime(true) - $time2;
-$m2 = memory_get_peak_usage() - $m2;
+$m2 = memory_get_usage() - $m2;
 
 echo "Tested execution of " . ITERATIONS . " empty function calls in a loop:\n";
 echo "No timing:      " . sprintf("%.5f", $time) . " secs, " . sprintf("%7d", $m) . " bytes used\n";
