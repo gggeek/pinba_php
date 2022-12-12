@@ -135,7 +135,10 @@ class Prtbfr
             case self::TYPE_STRING:
             case self::TYPE_BYTES:
                 // handle NUL chars the same way as the C code does
-                $value = strstr((string)$value, chr(0), true);
+                $value = (string)$value;
+                if (strpos($value, chr(0)) !== false) {
+                    $value = strstr($value, chr(0), true);
+                }
                 $value = self::varint_encode(strlen($value)) . $value;
                 break;
             case self::TYPE_ENUM:
