@@ -1,4 +1,4 @@
-v1.1.1 - 12/12/2022
+v1.1.1 - 13/12/2022
 
 * improved: if any of the string values sent to the Pinba server include a NUL character (`chr(0)`), behave the same way
   as the php extension does, ie. truncating the string to the part before the first NUL character occurrence
